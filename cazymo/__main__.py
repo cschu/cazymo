@@ -46,9 +46,8 @@ def main():
         reference_type="domain",
     )
 
-    ncpus = 8
     with subprocess.Popen(
-        ("bwa", "mem", "-a", "-t", f"{ncpus}", "-K", "10000000", args.bwa_index, *args.input_files),
+        ("bwa", "mem", "-a", "-t", f"{args.cpus}", "-K", "10000000", args.bwa_index, *args.input_files),
         stdout=subprocess.PIPE
     ) as bwa_proc:
         with subprocess.Popen(

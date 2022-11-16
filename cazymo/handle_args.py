@@ -122,6 +122,12 @@ def handle_args(args):
     )
 
     ap.add_argument(
+        "--cpus", "-t",
+        type=int, default=1,
+        help="",
+    )
+
+    ap.add_argument(
         "--version", "-v", action="version", version="%(prog)s " + __version__
     )
     ap.add_argument("--debug", action="store_true")
