@@ -56,7 +56,7 @@ def main():
         ) as samtools_proc:
             fq.process_bamfile(
                 samtools_proc.stdout,
-                aln_format=args.format,
+                aln_format="bam",
                 min_identity=args.min_identity, min_seqlen=args.min_seqlen
             )
     
