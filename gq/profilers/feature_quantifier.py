@@ -6,11 +6,11 @@ import gzip
 import logging
 import time
 
-from gffquant.db.annotation_db import AnnotationDatabaseManager
-from gffquant.counters import CountManager
-from gffquant.annotation import GeneCountAnnotator, RegionCountAnnotator, CountWriter
-from gffquant.counters.coverage_counter import CoverageCounter
-from gffquant.alignment import AlignmentGroup, AlignmentProcessor, SamFlags
+from gq.db.annotation_db import AnnotationDatabaseManager
+from gq.counters import CountManager
+from gq.annotation import GeneCountAnnotator, RegionCountAnnotator, CountWriter
+from gq.counters.coverage_counter import CoverageCounter
+from gq.alignment import AlignmentGroup, AlignmentProcessor, SamFlags
 
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ class FeatureQuantifier:
     def __init__(
         self,
         db=None,
-        out_prefix="gffquant",
+        out_prefix="gq",
         ambig_mode="unique_only",
         reference_type="genome",
         strand_specific=False,

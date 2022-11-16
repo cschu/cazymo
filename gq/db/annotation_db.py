@@ -8,8 +8,8 @@ from functools import lru_cache
 
 from intervaltree import IntervalTree
 
-from gffquant.db import get_database
-from gffquant.db.models import db
+from gq.db import get_database
+from gq.db.models import db
 
 logger = logging.getLogger(__name__)
 
