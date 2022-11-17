@@ -6,6 +6,7 @@ import logging
 import os
 import pathlib
 import subprocess
+import sqlite3
 import sys
 
 # pylint: disable=W0611
@@ -35,30 +36,42 @@ def main():
             exist_ok=True, parents=True
         )
 
-    fq = RegionQuantifier(
-        db=args.annotation_db,
-        out_prefix=args.out_prefix,
-        ambig_mode=args.ambig_mode,
-        strand_specific=args.strand_specific,
-        calc_coverage=True,
-        paired_end_count=args.paired_end_count,
-        unmarked_orphans=args.unmarked_orphans,
-        reference_type="domain",
-    )
+    from gq.db import get_writable_database
+    from gq.bin.build_domain_database import gather_category_and_feature_data, process_annotations
+    from gq.db.models import db
+    engine, db_session = get_writable_database()
 
-    with subprocess.Popen(
-        ("bwa", "mem", "-a", "-t", f"{args.cpus}", "-K", "10000000", args.bwa_index, *args.input_files),
-        stdout=subprocess.PIPE
-    ) as bwa_proc:
+    with db_session:
+        code_map, nseqs = gather_category_and_feature_data(args.annotation_db, db_session=db_session)
+        process_annotations(args.annotation_db, db_session, code_map, nseqs)
+
+        print("QUERY", db_session.query(db.Feature).filter(db.Feature.id == 1).join(db.Category, db.Feature.category_id == db.Category.id).one_or_none().name)
+        logging.info("Finished loading database.")    
+
+        fq = RegionQuantifier(
+            db=db_session,
+            out_prefix=args.out_prefix,
+            ambig_mode=args.ambig_mode,
+            strand_specific=args.strand_specific,
+            calc_coverage=True,
+            paired_end_count=args.paired_end_count,
+            unmarked_orphans=args.unmarked_orphans,
+            reference_type="domain",
+        )
+
         with subprocess.Popen(
-            ("samtools", "view", "-F", "4", "-buSh", "-"),
-            stdin=bwa_proc.stdout, stdout=subprocess.PIPE
-        ) as samtools_proc:
-            fq.process_bamfile(
-                samtools_proc.stdout,
-                aln_format="bam",
-                min_identity=args.min_identity, min_seqlen=args.min_seqlen
-            )
+            ("bwa", "mem", "-a", "-t", f"{args.cpus}", "-K", "10000000", args.bwa_index, *args.input_files),
+            stdout=subprocess.PIPE
+        ) as bwa_proc:
+            with subprocess.Popen(
+                ("samtools", "view", "-F", "4", "-buSh", "-"),
+                stdin=bwa_proc.stdout, stdout=subprocess.PIPE
+            ) as samtools_proc:
+                fq.process_bamfile(
+                    samtools_proc.stdout,
+                    aln_format="bam",
+                    min_identity=args.min_identity, min_seqlen=args.min_seqlen
+                )
     
     # "bwa mem -a -t ${align_cpus} ${blocksize} \$(readlink ${reference}) ${sample.id}_R1.sorted.fastq.gz ${reads2} | samtools view -F 4 -buSh - | ${sort_cmd}"
 
