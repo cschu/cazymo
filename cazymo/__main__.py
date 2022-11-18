@@ -37,7 +37,7 @@ def main():
         )
 
     from gq.db import get_writable_database
-    from gq.bin.build_domain_database import gather_category_and_feature_data, process_annotations
+    from gq.bin.build_bed_database import gather_category_and_feature_data, process_annotations
     from gq.db.models import db
     engine, db_session = get_writable_database()
 
