@@ -187,12 +187,14 @@ class FeatureQuantifier:
 
             if current_aln_group is None or current_aln_group.qname != aln.qname:
                 if current_aln_group is not None:
+                    # logger.info("Processing new alignment group %s (%s)", current_aln_group.qname, current_aln_group.n_align())
                     self.process_alignment_group(current_aln_group)
                 current_aln_group = AlignmentGroup()
 
             current_aln_group.add_alignment(aln)
 
         if current_aln_group is not None:
+            # logger.info("Processing new alignment group %s (%s)", current_aln_group.qname, current_aln_group.n_align())
             self.process_alignment_group(current_aln_group)
 
         if aln_count == 0:
