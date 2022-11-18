@@ -82,7 +82,7 @@ def main():
                     fq_input = samtools_proc.stdout
                 else:
                     bedtools_proc = subprocess.Popen(
-                        ("bedtools", "intersect", "-ubam", "-a", "stdin", "-b", f"{args.annotation_db}"),
+                        ("bedtools", "intersect", "-u", "-ubam", "-a", "stdin", "-b", f"{args.annotation_db}"),
                         stdin=samtools_proc.stdout, stdout=subprocess.PIPE
                     )
                     # bedtools intersect -u -ubam -a ${bam} -b ${db_bedfile} > filtered_bam/${sample}.bam
