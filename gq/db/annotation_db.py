@@ -19,7 +19,7 @@ class AnnotationDatabaseManager:
         if isinstance(db_path, str):
             _, self.dbsession = get_database(db_path)
         else:
-            _, self.dbsession = db_path
+            self.dbsession = db_path
 
     def query_sequence(self, seqid, start=None, end=None):
         if start is not None and end is not None:
