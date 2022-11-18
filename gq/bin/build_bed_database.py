@@ -62,7 +62,7 @@ def gather_category_and_feature_data(input_data, db_path=None, db_session=None):
     code_map = {}
     feature_offset = 0
 
-    _map_out = gzip.open(db_path + ".code_map.json.gz", "wt") if db_path else contextlib.nullecontext()
+    _map_out = gzip.open(db_path + ".code_map.json.gz", "wt") if db_path else contextlib.nullcontext()
     with _map_out:
         for category, features in sorted(cat_d.items()):
             code_map[category] = {
