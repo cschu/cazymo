@@ -81,6 +81,7 @@ def main():
                     bedtools_proc = contextlib.nullcontext()
                     fq_input = samtools_proc.stdout
                 else:
+                    logging.info("Prefiltering activated.")
                     bedtools_proc = subprocess.Popen(
                         ("bedtools", "intersect", "-u", "-ubam", "-a", "stdin", "-b", f"{args.annotation_db}"),
                         stdin=samtools_proc.stdout, stdout=subprocess.PIPE
