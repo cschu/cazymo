@@ -1,4 +1,4 @@
-# pylint: disable=C0103
+# pylint: disable=C0103,C0301
 
 """ module docstring """
 
@@ -137,6 +137,8 @@ class FeatureQuantifier:
             count_annotator = GeneCountAnnotator(self.strand_specific)
             count_annotator.annotate(self.alp, self.adm, self.count_manager)
 
+        count_annotator.calculate_scaling_factors(self.out_prefix, self.adm)
+
         count_writer = CountWriter(
             self.out_prefix,
             has_ambig_counts=self.count_manager.has_ambig_counts(),
@@ -187,12 +189,14 @@ class FeatureQuantifier:
 
             if current_aln_group is None or current_aln_group.qname != aln.qname:
                 if current_aln_group is not None:
+                    # logger.info("Processing new alignment group %s (%s)", current_aln_group.qname, current_aln_group.n_align())
                     self.process_alignment_group(current_aln_group)
                 current_aln_group = AlignmentGroup()
 
             current_aln_group.add_alignment(aln)
 
         if current_aln_group is not None:
+            # logger.info("Processing new alignment group %s (%s)", current_aln_group.qname, current_aln_group.n_align())
             self.process_alignment_group(current_aln_group)
 
         if aln_count == 0:
