@@ -156,8 +156,8 @@ class CountAnnotator(dict):
 
                 print(
                     f"TOTAL CATEGORY COUNTS: cat={category_name}",
-                    "uraw={total_uniq} unorm={total_uniq_normed}",
-                    "araw={total_ambi} anorm={total_ambi_normed} -> factors={ufactor},{afactor}",
+                    f"uraw={total_uniq} unorm={total_uniq_normed}",
+                    f"araw={total_ambi} anorm={total_ambi_normed} -> factors={ufactor},{afactor}",
                     file=_out,
                 )
 
