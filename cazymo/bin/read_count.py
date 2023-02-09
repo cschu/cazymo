@@ -7,7 +7,7 @@ import sys
 def get_lines_from_chunks(_in, bufsize=400000000):
     tail = ""
     while True:
-        chunk = "".join((tail, _in.read(bufsize).decode()))
+        chunk = "".join((tail, _in.read(bufsize)))
         if not chunk:
             break
         chunk = chunk.split("\n")
