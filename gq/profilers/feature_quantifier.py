@@ -12,6 +12,7 @@ from gq.annotation import GeneCountAnnotator, RegionCountAnnotator, CountWriter
 from gq.counters.coverage_counter import CoverageCounter
 from gq.alignment import AlignmentGroup, AlignmentProcessor, SamFlags
 
+from .. import __toolname__
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class FeatureQuantifier:
     def __init__(
         self,
         db=None,
-        out_prefix="gffquant",
+        out_prefix=__toolname__,
         ambig_mode="unique_only",
         reference_type="genome",
         strand_specific=False,
@@ -218,7 +219,10 @@ class FeatureQuantifier:
         with gzip.open(f"{self.out_prefix}.aln_stats.txt.gz", "wt") as aln_stats_out:
             print(self.alp.get_alignment_stats_str(table=True), file=aln_stats_out)
 
-        if aln_count:            
-            self.process_counters(unannotated_ambig, external_readcounts if external_readcounts is not None else read_count)
+        if aln_count:
+            self.process_counters(
+                unannotated_ambig,
+                external_readcounts if external_readcounts is not None else read_count
+            )
 
         logger.info("Finished.")

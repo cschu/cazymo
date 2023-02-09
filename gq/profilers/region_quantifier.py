@@ -7,6 +7,7 @@ import logging
 from gq.db.annotation_db import AnnotationDatabaseManager
 from .feature_quantifier import FeatureQuantifier
 
+from .. import __toolname__
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ class RegionQuantifier(FeatureQuantifier):
     def __init__(
         self,
         db=None,
-        out_prefix="gffquant",
+        out_prefix=__toolname__,
         ambig_mode="uniq_only",
         strand_specific=False,
         calc_coverage=False,

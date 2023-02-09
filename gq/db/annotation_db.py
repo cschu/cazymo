@@ -62,7 +62,7 @@ class AnnotationDatabaseManager:
 
             if qend < sstart or send < qstart:
                 continue
-            
+
             covered_interval = self.calc_covered_fraction(qstart, qend, sstart, send) if calc_coverage else interval
             yield interval, covered_interval
             # if sstart <= qstart <= qend <= send:
