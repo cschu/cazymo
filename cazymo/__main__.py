@@ -122,7 +122,7 @@ def main():
                 if not args.no_prefilter:
                     try:
                         # readcounts = json.loads(open(args.out_prefix + ".readcount.json", "rt")).get("n_reads", 0)
-                        readcounts = json.loads(read_count_proc.stderr.read()).get("n_reads")
+                        readcounts = json.loads(read_count_proc.stderr).get("n_reads")
                     except:
                         logger.warn("Could not access pre-filter readcounts. Using post-filter readcounts.")
                         
