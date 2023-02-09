@@ -121,7 +121,7 @@ def main():
                         align_stream,
                         aln_format="bam",
                         min_identity=args.min_identity, min_seqlen=args.min_seqlen,
-                        external_readcounts=None if args.no_prefilter else json.loads(read_count_proc.stderr).get("n_reads", 0)
+                        external_readcounts=None if args.no_prefilter else json.loads(read_count_proc.stderr.read()).get("n_reads", 0)
                     )
 
 
