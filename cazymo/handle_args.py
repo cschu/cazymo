@@ -47,7 +47,7 @@ def handle_args(args):
         help=textwrap.dedent(
             """\
             Path to metagenomic reads in fastq format or alignments in sam or bam format.
-            Fastq files can be supplied as a single unpaired file or two paired-end files. 
+            Fastq files can be supplied as a single unpaired file or two paired-end files.
             Sam or bam files need to be name-sorted and need to be specified via the --format flag.
             Ambiguous alignments need to be flagged as secondary
             alignments with the same read id as their primary alignment.
@@ -119,6 +119,12 @@ def handle_args(args):
         "--unmarked_orphans",
         action="store_true",
         help="Ensure that alignments from unmarked orphan reads (from preprocessing) are properly accounted for.",
+    )
+
+    ap.add_argument(
+        "--no_prefilter",
+        action="store_true",
+        help="",
     )
 
     ap.add_argument(
