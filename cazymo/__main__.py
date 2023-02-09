@@ -122,12 +122,12 @@ def main():
                     readcounts = json.loads(open(args.out_prefix + ".readcount.json", "rt")).get("n_reads", 0)
                 except:
                     readcounts = 0
-                    fq.process_bamfile(
-                        align_stream,
-                        aln_format="bam",
-                        min_identity=args.min_identity, min_seqlen=args.min_seqlen,
-                        external_readcounts=None if args.no_prefilter else readcounts,
-                    )
+                fq.process_bamfile(
+                    align_stream,
+                    aln_format="bam",
+                    min_identity=args.min_identity, min_seqlen=args.min_seqlen,
+                    external_readcounts=None if args.no_prefilter else readcounts,
+                )
 
 
             # with subprocess.Popen(
