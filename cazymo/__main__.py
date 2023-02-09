@@ -105,7 +105,7 @@ def main():
                     ("samtools", "view", "-F 4", "-Sh", "-",), stdin=bwa_proc.stdout, stdout=subprocess.PIPE
                 )
                 read_count_proc = subprocess.Popen(
-                    ("read_count", args.out_prefix), stdin=samtools_filter_proc.stdout, stdout=subprocess.PIPE, #stderr=subprocess.PIPE
+                    ("read_count", args.out_prefix), stdin=samtools_filter_proc.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 )
                 samtools_convert_proc = subprocess.Popen(
                     ("samtools", "view", "-buSh", "-",), stdin=read_count_proc.stdout, stdout=subprocess.PIPE
@@ -118,15 +118,19 @@ def main():
 
             # with samtools_filter_proc, read_count_proc, samtools_convert_proc, bedtools_proc:
             with bedtools_proc:
-                try:
-                    readcounts = json.loads(open(args.out_prefix + ".readcount.json", "rt")).get("n_reads", 0)
-                except:
-                    readcounts = 0
+                readcounts = None
+                if not args.no_prefilter:
+                    try:
+                        # readcounts = json.loads(open(args.out_prefix + ".readcount.json", "rt")).get("n_reads", 0)
+                        readcounts = json.loads(read_count_proc.stderr.read()).get("n_reads")
+                    except:
+                        logger.warn("Could not access pre-filter readcounts. Using post-filter readcounts.")
+                        
                 fq.process_bamfile(
                     align_stream,
                     aln_format="bam",
                     min_identity=args.min_identity, min_seqlen=args.min_seqlen,
-                    external_readcounts=None if args.no_prefilter else readcounts,
+                    external_readcounts=readcounts,
                 )
 
 
