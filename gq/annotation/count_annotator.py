@@ -2,7 +2,6 @@
 
 """ This module contains code for transforming gene counts to feature counts. """
 
-import gzip
 import logging
 
 from itertools import chain
@@ -78,7 +77,7 @@ class CountAnnotator(dict):
         fcounts = self.setdefault(category, {}).setdefault(feature, np.zeros(self.bins))
         fcounts += counts
 
-    def calculate_scaling_factors(self, prefix, db, default_scaling_factor=0):
+    def calculate_scaling_factors(self, default_scaling_factor=0):
         """ Calculates all scaling factors.
         scaling_factor = uniq_counts / normed_counts
         input:
@@ -88,78 +87,56 @@ class CountAnnotator(dict):
         def calc_scaling_factor(raw, normed, default=0):
             return (raw / normed) if normed else default
 
-        with gzip.open(f"{prefix}.summary.txt.gz", "wt") as _out:
+        total_uniq, total_uniq_normed, total_ambi, total_ambi_normed = self.total_counts
+        logger.info(
+            "TOTAL COUNTS: uraw=%s unorm=%s araw=%s anorm=%s",
+            total_uniq, total_uniq_normed, total_ambi, total_ambi_normed
+        )
 
-            total_uniq, total_uniq_normed, total_ambi, total_ambi_normed = self.total_counts
+        self.scaling_factors["total_uniq"] = calc_scaling_factor(
+            total_uniq, total_uniq_normed, default_scaling_factor
+        )
+
+        self.scaling_factors["total_ambi"] = calc_scaling_factor(
+            total_ambi, total_ambi_normed, default_scaling_factor
+        )
+
+        total_uniq, total_uniq_normed, total_ambi, total_ambi_normed = self.total_gene_counts
+        logger.info(
+            "TOTAL GENE COUNTS: uraw=%s unorm=%s araw=%s anorm=%s",
+            total_uniq, total_uniq_normed, total_ambi, total_ambi_normed
+        )
+
+        self.scaling_factors["total_gene_uniq"] = calc_scaling_factor(
+            total_uniq, total_uniq_normed, default_scaling_factor
+        )
+
+        self.scaling_factors["total_gene_ambi"] = calc_scaling_factor(
+            total_ambi, total_ambi_normed, default_scaling_factor
+        )
+
+        fc_items = self.feature_count_sums.items()
+        for category, (
+            total_uniq,
+            total_uniq_normed,
+            total_ambi,
+            total_ambi_normed,
+        ) in fc_items:
+
+            self.scaling_factors[category] = (
+                calc_scaling_factor(
+                    total_uniq, total_uniq_normed, default_scaling_factor
+                ),
+                calc_scaling_factor(
+                    total_ambi, total_ambi_normed, default_scaling_factor
+                )
+            )
+
             logger.info(
-                "TOTAL COUNTS: uraw=%s unorm=%s araw=%s anorm=%s",
-                total_uniq, total_uniq_normed, total_ambi, total_ambi_normed
+                "Calculating scaling factors for category=%s: uraw=%s unorm=%s araw=%s anorm=%s -> factors=%s",
+                category, total_uniq, total_uniq_normed,
+                total_ambi, total_ambi_normed, self.scaling_factors[category]
             )
-
-            print(
-                "TOTAL COUNTS:",
-                f"uraw={total_uniq} unorm={total_uniq_normed} araw={total_ambi} anorm={total_ambi_normed}",
-                file=_out,
-            )
-
-            self.scaling_factors["total_uniq"] = calc_scaling_factor(
-                total_uniq, total_uniq_normed, default_scaling_factor
-            )
-
-            self.scaling_factors["total_ambi"] = calc_scaling_factor(
-                total_ambi, total_ambi_normed, default_scaling_factor
-            )
-
-            total_uniq, total_uniq_normed, total_ambi, total_ambi_normed = self.total_gene_counts
-            logger.info(
-                "TOTAL GENE COUNTS: uraw=%s unorm=%s araw=%s anorm=%s",
-                total_uniq, total_uniq_normed, total_ambi, total_ambi_normed
-            )
-
-            print(
-                "TOTAL GENE COUNTS:",
-                f"uraw={total_uniq} unorm={total_uniq_normed} araw={total_ambi} anorm={total_ambi_normed}",
-                file=_out,
-            )
-
-            self.scaling_factors["total_gene_uniq"] = calc_scaling_factor(
-                total_uniq, total_uniq_normed, default_scaling_factor
-            )
-
-            self.scaling_factors["total_gene_ambi"] = calc_scaling_factor(
-                total_ambi, total_ambi_normed, default_scaling_factor
-            )
-
-            fc_items = self.feature_count_sums.items()
-            for category, (
-                total_uniq,
-                total_uniq_normed,
-                total_ambi,
-                total_ambi_normed,
-            ) in sorted(fc_items, key=lambda item: int(item[0])):
-
-                ufactor, afactor = self.scaling_factors[category] = (
-                    calc_scaling_factor(
-                        total_uniq, total_uniq_normed, default_scaling_factor
-                    ),
-                    calc_scaling_factor(
-                        total_ambi, total_ambi_normed, default_scaling_factor
-                    )
-                )
-
-                category_name = db.query_category(category).name
-                logger.info(
-                    "Calculating scaling factors for category=%s: uraw=%s unorm=%s araw=%s anorm=%s -> factors=%s,%s",
-                    category_name, total_uniq, total_uniq_normed,
-                    total_ambi, total_ambi_normed, ufactor, afactor
-                )
-
-                print(
-                    f"TOTAL CATEGORY COUNTS: cat={category_name}",
-                    f"uraw={total_uniq} unorm={total_uniq_normed}",
-                    f"araw={total_ambi} anorm={total_ambi_normed} -> factors={ufactor},{afactor}",
-                    file=_out,
-                )
 
     # pylint: disable=R0913
     def compute_count_vector(
@@ -168,7 +145,8 @@ class CountAnnotator(dict):
         ambig_counts,
         length,
         strand_specific_counts=None,
-        region_counts=False
+        region_counts=False,
+        coverage_counts=False,
     ):
         """Computes a count vector for a region."""
         # we have either 4 bins (unstranded) or 12 (strand-specific)
@@ -191,7 +169,7 @@ class CountAnnotator(dict):
         # 1. each of these fields gets a copy of the unique count sum
         # 2. add the ambiguous counts to the combined_ elements
 
-        if region_counts:
+        if region_counts and coverage_counts:
             counts[0:4] = sum(x[2] for x in chain(*uniq_counts) if x is not None)
             counts[2:4] += sum(x[2] for x in chain(*ambig_counts) if x is not None)
         else:
@@ -229,7 +207,7 @@ class RegionCountAnnotator(CountAnnotator):
                     (start, end), rev_strand = region
                 else:
                     (start, end), rev_strand = region, None
-                # region_annotation is a tuple of key-value pairs:
+                # the region_annotation is a tuple of key-value pairs:
                 # (strand, func_category1: subcategories, func_category2: subcategories, ...)
                 # the first is the strand, the second is the gene id, the rest are the features
 
@@ -260,16 +238,19 @@ class RegionCountAnnotator(CountAnnotator):
                     else:
                         strand_specific_counts = None
 
+                    calc_coverage = coverage_counter is not None and (uniq_counts or ambig_counts)
+
                     region_length = end - start + 1
                     counts = self.compute_count_vector(
                         uniq_counts,
                         ambig_counts,
                         region_length,
                         strand_specific_counts=strand_specific_counts,
-                        region_counts=True
+                        region_counts=True,
+                        coverage_counts=calc_coverage,
                     )
 
-                    if coverage_counter is not None and (uniq_counts or ambig_counts):
+                    if calc_coverage:
                         coverage_counter.update_coverage(rid, start, end, uniq_counts, ambig_counts, region_annotation)
 
                     self.distribute_feature_counts(counts, region_annotation)
@@ -279,6 +260,8 @@ class RegionCountAnnotator(CountAnnotator):
                     )
                     gcounts += counts
                     self.total_gene_counts += counts[:4]
+
+        self.calculate_scaling_factors()
 
 
 class GeneCountAnnotator(CountAnnotator):
@@ -324,3 +307,5 @@ class GeneCountAnnotator(CountAnnotator):
             if region_annotation is not None:
                 _, _, region_annotation = region_annotation
                 self.distribute_feature_counts(counts, region_annotation)
+
+        self.calculate_scaling_factors()

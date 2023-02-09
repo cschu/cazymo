@@ -16,7 +16,7 @@ class RegionQuantifier(FeatureQuantifier):
     def __init__(
         self,
         db=None,
-        out_prefix="cazymo",
+        out_prefix="gffquant",
         ambig_mode="uniq_only",
         strand_specific=False,
         calc_coverage=False,
