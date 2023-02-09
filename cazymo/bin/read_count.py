@@ -32,7 +32,7 @@ def main():
                 nreads += 1
                 lastread = rname
 
-        print(line, end="", file=sys.stdout)
+        print(line, file=sys.stdout)
 
     counts = {
         "n_lines": nlines, "n_align": nalign, "n_reads": nreads
