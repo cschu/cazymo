@@ -3,6 +3,7 @@
 """ module docstring """
 
 import contextlib
+import json
 import logging
 import os
 import pathlib
@@ -68,34 +69,85 @@ def main():
             reference_type="domain",
         )
 
+        # cmd = [f"bwa mem -a -t {args.cpus} -K 10000000 {args.bwa_index} {' '.join(args.input_files)}"]
+        # if args.no_prefilter:
+        #     cmd += ["samtools view -F 4 -buSh -"]
+        # else:
+        #     cmd += ["samtools view -F 4 -Sh -"]
+        #     cmd += ["count_reads"]
+        #     cmd += ["samtools view -buSh -"]
+        #     cmd += ["bedtools intersect -u -ubam -a stdin -b {args.annotation_db}"]
+
+        # with subprocess.Popen(
+        #     "|".join(cmd), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,    
+        # ) as align_flow:
+        #     fq.process_bamfile(
+
+        #     )
+
         # pylint: disable=E1124
         with subprocess.Popen(
             ("bwa", "mem", "-a", "-t", f"{args.cpus}", "-K", "10000000", args.bwa_index, *args.input_files),
             stdout=subprocess.PIPE
         ) as bwa_proc:
-            with subprocess.Popen(
-                ("samtools", "view", "-F", "4", "-buSh", "-"),
-                stdin=bwa_proc.stdout, stdout=subprocess.PIPE
-            ) as samtools_proc:
-                if args.no_prefilter:
-                    bedtools_proc = contextlib.nullcontext()
-                    fq_input = samtools_proc.stdout
-                else:
-                    logging.info("Prefiltering activated.")
-                    bedtools_proc = subprocess.Popen(
-                        ("bedtools", "intersect", "-u", "-ubam", "-a", "stdin", "-b", f"{args.annotation_db}"),
-                        stdin=samtools_proc.stdout, stdout=subprocess.PIPE
-                    )
-                    # bedtools intersect -u -ubam -a ${bam} -b ${db_bedfile} > filtered_bam/${sample}.bam
+            if args.no_prefilter:
+                samtools_filter_proc = subprocess.Popen(
+                    ("samtools", "view", "-F 4", "-buSh", "-",), stdin=bwa_proc.stdout, stdout=subprocess.PIPE
+                )
+                read_count_proc = contextlib.nullcontext()
+                samtools_convert_proc = contextlib.nullcontext()
+                bedtools_proc = contextlib.nullcontext()
 
-                    fq_input = bedtools_proc.stdout
+                align_stream = samtools_filter_proc.stdout
+            else:
+                logging.info("Prefiltering activated.")
+                samtools_filter_proc = subprocess.Popen(
+                    ("samtools", "view", "-F 4", "-Sh", "-",), stdin=bwa_proc.stdout, stdout=subprocess.PIPE
+                )
+                read_count_proc = subprocess.Popen(
+                    ("gq_read_count",), stdin=samtools_filter_proc, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                )
+                samtools_convert_proc = subprocess.Popen(
+                    ("samtools", "view", "-buSh", "-",), stdin=read_count_proc.stdout, stdout=subprocess.PIPE
+                )
+                bedtools_proc = subprocess.Popen(
+                    ("bedtools", "intersect", "-u", "-ubam", "-a", "stdin", "-b", f"{args.annotation_db}",),
+                    stdin=samtools_convert_proc.stdout, stdout=subprocess.PIPE
+                )
+                align_stream = bedtools_proc.stdout
 
-                with bedtools_proc:
+            with samtools_filter_proc, read_count_proc, samtools_convert_proc, bedtools_proc:
                     fq.process_bamfile(
-                        fq_input,
+                        align_stream,
                         aln_format="bam",
-                        min_identity=args.min_identity, min_seqlen=args.min_seqlen
+                        min_identity=args.min_identity, min_seqlen=args.min_seqlen,
+                        external_readcounts=None if args.no_prefilter else json.loads(read_count_proc.stderr).get("n_reads", 0)
                     )
+
+
+            # with subprocess.Popen(
+            #     ("samtools", "view", "-F", "4", "-buSh", "-"),
+            #     stdin=bwa_proc.stdout, stdout=subprocess.PIPE
+            # ) as samtools_proc:
+            #     if args.no_prefilter:
+            #         bedtools_proc = contextlib.nullcontext()
+            #         fq_input = samtools_proc.stdout
+            #     else:
+            #         logging.info("Prefiltering activated.")
+            #         bedtools_proc = subprocess.Popen(
+            #             ("bedtools", "intersect", "-u", "-ubam", "-a", "stdin", "-b", f"{args.annotation_db}"),
+            #             stdin=samtools_proc.stdout, stdout=subprocess.PIPE
+            #         )
+            #         # bedtools intersect -u -ubam -a ${bam} -b ${db_bedfile} > filtered_bam/${sample}.bam
+
+            #         fq_input = bedtools_proc.stdout
+
+            #     with bedtools_proc:
+            #         fq.process_bamfile(
+            #             fq_input,
+            #             aln_format="bam",
+            #             min_identity=args.min_identity, min_seqlen=args.min_seqlen
+            #         )
 
 
 if __name__ == "__main__":

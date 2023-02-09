@@ -51,6 +51,7 @@ with open(path.join(here, "DESCRIPTION.md"), encoding="utf-8") as description:
 				"collate_counts=gq.bin.collate_counts:main",
 				"build_domain_database=gq.bin.build_domain_database:main",
 				"build_bed_database=gq.bin.build_bed_database:main",
+				"read_count=cazymo.bin.read_count:main",
 			],
 		},
 		package_data={},
