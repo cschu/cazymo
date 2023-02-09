@@ -105,7 +105,7 @@ def main():
                     ("samtools", "view", "-F 4", "-Sh", "-",), stdin=bwa_proc.stdout, stdout=subprocess.PIPE
                 )
                 read_count_proc = subprocess.Popen(
-                    ("gq_read_count",), stdin=samtools_filter_proc, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                    ("read_count",), stdin=samtools_filter_proc, stdout=subprocess.PIPE, stderr=subprocess.PIPE
                 )
                 samtools_convert_proc = subprocess.Popen(
                     ("samtools", "view", "-buSh", "-",), stdin=read_count_proc.stdout, stdout=subprocess.PIPE
