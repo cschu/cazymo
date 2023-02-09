@@ -38,7 +38,8 @@ def main():
         "n_lines": nlines, "n_align": nalign, "n_reads": nreads
     }
 
-    print(json.dumps(counts), file=sys.stderr)
+    with open(f"{sys.argv[1]}.readcount.json", "wt") as json_out:
+        print(json.dumps(counts), file=json_out)
 
 
 if __name__ == "__main__":
