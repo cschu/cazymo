@@ -63,7 +63,7 @@ def main():
             out_prefix=args.out_prefix,
             ambig_mode=args.ambig_mode,
             strand_specific=args.strand_specific,
-            calc_coverage=True,
+            calc_coverage=False,
             paired_end_count=args.paired_end_count,
             unmarked_orphans=args.unmarked_orphans,
             reference_type="domain",
