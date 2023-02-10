@@ -3,6 +3,7 @@
 """ module docstring """
 
 import gzip
+import json
 import logging
 import time
 
@@ -220,9 +221,17 @@ class FeatureQuantifier:
             print(self.alp.get_alignment_stats_str(table=True), file=aln_stats_out)
 
         if aln_count:
+            read_count = None
+            if external_readcounts is not None:
+                try:
+                    # readcounts = json.loads(open(args.out_prefix + ".readcount.json", "rt")).get("n_reads", 0)
+                    read_count = json.loads(external_readcounts).get("n_reads")
+                except:
+                    logger.warn("Could not access pre-filter readcounts. Using post-filter readcounts.")
+
             self.process_counters(
                 unannotated_ambig,
-                external_readcounts if external_readcounts is not None else read_count
+                external_readcounts=read_count
             )
 
         logger.info("Finished.")

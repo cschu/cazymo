@@ -118,19 +118,19 @@ def main():
 
             # with samtools_filter_proc, read_count_proc, samtools_convert_proc, bedtools_proc:
             with bedtools_proc:
-                readcounts = None
-                if not args.no_prefilter:
-                    try:
-                        # readcounts = json.loads(open(args.out_prefix + ".readcount.json", "rt")).get("n_reads", 0)
-                        readcounts = json.loads(read_count_proc.stderr).get("n_reads")
-                    except:
-                        logger.warn("Could not access pre-filter readcounts. Using post-filter readcounts.")
+                # readcounts = None
+                # if not args.no_prefilter:
+                #     try:
+                #         # readcounts = json.loads(open(args.out_prefix + ".readcount.json", "rt")).get("n_reads", 0)
+                #         readcounts = json.loads(read_count_proc.stderr).get("n_reads")
+                #     except:
+                #         logger.warn("Could not access pre-filter readcounts. Using post-filter readcounts.")
                         
                 fq.process_bamfile(
                     align_stream,
                     aln_format="bam",
                     min_identity=args.min_identity, min_seqlen=args.min_seqlen,
-                    external_readcounts=readcounts,
+                    external_readcounts=None if args.no_prefilter else read_count_proc.stderr,
                 )
 
 
