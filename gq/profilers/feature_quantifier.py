@@ -226,12 +226,13 @@ class FeatureQuantifier:
                 try:
                     # readcounts = json.loads(open(args.out_prefix + ".readcount.json", "rt")).get("n_reads", 0)
                     read_count = json.loads(external_readcounts).get("n_reads")
-                except:
+                except Exception as err:
+                    print(f"Error accessing readcounts: {err}")
                     logger.warn("Could not access pre-filter readcounts. Using post-filter readcounts.")
 
             self.process_counters(
                 unannotated_ambig,
-                external_readcounts=read_count
+                aln_count=read_count,
             )
 
         logger.info("Finished.")
