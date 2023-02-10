@@ -225,7 +225,7 @@ class FeatureQuantifier:
                 try:
                     # readcounts = json.loads(open(args.out_prefix + ".readcount.json", "rt")).get("n_reads", 0)
                     # read_count = json.loads(external_readcounts).get("n_reads")
-                    read_count = json.loads(open(external_readcounts)).get("n_reads")
+                    read_count = json.load(open(external_readcounts)).get("n_reads")
                     logger.info("Using pre-filter readcounts (%s).", read_count)
                 except Exception as err:
                     print(f"Error accessing readcounts: {err}")                    
