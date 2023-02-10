@@ -220,15 +220,15 @@ class FeatureQuantifier:
         with gzip.open(f"{self.out_prefix}.aln_stats.txt.gz", "wt") as aln_stats_out:
             print(self.alp.get_alignment_stats_str(table=True), file=aln_stats_out)
 
-        if aln_count:
-            read_count = None
+        if aln_count:            
             if external_readcounts is not None:
                 try:
                     # readcounts = json.loads(open(args.out_prefix + ".readcount.json", "rt")).get("n_reads", 0)
                     read_count = json.loads(external_readcounts).get("n_reads")
+                    logger.info("Using pre-filter readcounts (%s).", read_count)
                 except Exception as err:
-                    print(f"Error accessing readcounts: {err}")
-                    logger.warn("Could not access pre-filter readcounts. Using post-filter readcounts.")
+                    print(f"Error accessing readcounts: {err}")                    
+                    logger.warn("Could not access pre-filter readcounts. Using post-filter readcounts (%s).", read_count)
 
             self.process_counters(
                 unannotated_ambig,
