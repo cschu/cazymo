@@ -130,7 +130,7 @@ def main():
                     align_stream,
                     aln_format="bam",
                     min_identity=args.min_identity, min_seqlen=args.min_seqlen,
-                    external_readcounts=None if args.no_prefilter else read_count_proc.stderr.read().decode(),
+                    external_readcounts=None if args.no_prefilter else (args.out_prefix + ".readcount.json") # read_count_proc.stderr.read().decode(),
                 )
 
 
