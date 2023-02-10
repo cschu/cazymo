@@ -61,10 +61,8 @@ def main():
         fq = RegionQuantifier(
             db=db_session,
             out_prefix=args.out_prefix,
-            ambig_mode=args.ambig_mode,
+            ambig_mode="1overN",
             strand_specific=args.strand_specific,
-            calc_coverage=False,
-            paired_end_count=args.paired_end_count,
             unmarked_orphans=args.unmarked_orphans,
             reference_type="domain",
         )
@@ -85,53 +83,61 @@ def main():
 
         #     )
 
-        # pylint: disable=E1124
-        with subprocess.Popen(
-            ("bwa", "mem", "-a", "-t", f"{args.cpus}", "-K", "10000000", args.bwa_index, *args.input_files),
-            stdout=subprocess.PIPE
-        ) as bwa_proc:
-            if args.no_prefilter:
-                samtools_filter_proc = subprocess.Popen(
-                    ("samtools", "view", "-F 4", "-buSh", "-",), stdin=bwa_proc.stdout, stdout=subprocess.PIPE
-                )
-                read_count_proc = contextlib.nullcontext()
-                samtools_convert_proc = contextlib.nullcontext()
-                bedtools_proc = contextlib.nullcontext()
+        try:
 
-                align_stream = samtools_filter_proc.stdout
-            else:
-                logging.info("Prefiltering activated.")
-                samtools_filter_proc = subprocess.Popen(
-                    ("samtools", "view", "-F 4", "-Sh", "-",), stdin=bwa_proc.stdout, stdout=subprocess.PIPE
-                )
-                read_count_proc = subprocess.Popen(
-                    ("read_count", args.out_prefix), stdin=samtools_filter_proc.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                )
-                samtools_convert_proc = subprocess.Popen(
-                    ("samtools", "view", "-buSh", "-",), stdin=read_count_proc.stdout, stdout=subprocess.PIPE
-                )
-                bedtools_proc = subprocess.Popen(
-                    ("bedtools", "intersect", "-u", "-ubam", "-a", "stdin", "-b", f"{args.annotation_db}",),
-                    stdin=samtools_convert_proc.stdout, stdout=subprocess.PIPE
-                )
-                align_stream = bedtools_proc.stdout
+            # pylint: disable=E1124
+            with subprocess.Popen(
+                ("bwa", "mem", "-a", "-t", f"{args.cpus_for_alignment}", "-K", "10000000", args.bwa_index, *args.input_files),
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            ) as bwa_proc:
+                if args.no_prefilter:
+                    samtools_filter_proc = subprocess.Popen(
+                        ("samtools", "view", "-F 4", "-buSh", "-",), stdin=bwa_proc.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    )
+                    read_count_proc = contextlib.nullcontext()
+                    samtools_convert_proc = contextlib.nullcontext()
+                    bedtools_proc = contextlib.nullcontext()
 
-            # with samtools_filter_proc, read_count_proc, samtools_convert_proc, bedtools_proc:
-            with bedtools_proc:
-                # readcounts = None
-                # if not args.no_prefilter:
-                #     try:
-                #         # readcounts = json.loads(open(args.out_prefix + ".readcount.json", "rt")).get("n_reads", 0)
-                #         readcounts = json.loads(read_count_proc.stderr).get("n_reads")
-                #     except:
-                #         logger.warn("Could not access pre-filter readcounts. Using post-filter readcounts.")
-                        
-                fq.process_bamfile(
-                    align_stream,
-                    aln_format="bam",
-                    min_identity=args.min_identity, min_seqlen=args.min_seqlen,
-                    external_readcounts=None if args.no_prefilter else (args.out_prefix + ".readcount.json") # read_count_proc.stderr.read().decode(),
-                )
+                    align_stream = samtools_filter_proc.stdout
+                else:
+                    logging.info("Prefiltering activated.")
+                    samtools_filter_proc = subprocess.Popen(
+                        ("samtools", "view", "-F 4", "-Sh", "-",), stdin=bwa_proc.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    )
+                    read_count_proc = subprocess.Popen(
+                        ("read_count", args.out_prefix), stdin=samtools_filter_proc.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    )
+                    samtools_convert_proc = subprocess.Popen(
+                        ("samtools", "view", "-buSh", "-",), stdin=read_count_proc.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    )
+                    bedtools_proc = subprocess.Popen(
+                        ("bedtools", "intersect", "-u", "-ubam", "-a", "stdin", "-b", f"{args.annotation_db}",),
+                        stdin=samtools_convert_proc.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    )
+                    align_stream = bedtools_proc.stdout
+
+                # with samtools_filter_proc, read_count_proc, samtools_convert_proc, bedtools_proc:
+                with bedtools_proc:
+                    # readcounts = None
+                    # if not args.no_prefilter:
+                    #     try:
+                    #         # readcounts = json.loads(open(args.out_prefix + ".readcount.json", "rt")).get("n_reads", 0)
+                    #         readcounts = json.loads(read_count_proc.stderr).get("n_reads")
+                    #     except:
+                    #         logger.warn("Could not access pre-filter readcounts. Using post-filter readcounts.")
+                            
+                    fq.process_bamfile(
+                        align_stream,
+                        aln_format="bam",
+                        min_identity=args.min_identity, min_seqlen=args.min_seqlen,
+                        external_readcounts=None if args.no_prefilter else (args.out_prefix + ".readcount.json") # read_count_proc.stderr.read().decode(),
+                    )
+
+        except Exception as err:
+            logger.error("Caught exception:")
+            logger.error("%s", err)
+            raise Exception from err
+
 
 
             # with subprocess.Popen(

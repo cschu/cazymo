@@ -62,20 +62,20 @@ def handle_args(args):
         default="cazymo",
         help="Prefix for output files.",
     )
-    ap.add_argument(
-        "--ambig_mode",
-        type=str,
-        choices=("unique_only", "all1", "primary_only", "1overN"),
-        default="unique_only",
-        help=textwrap.dedent(
-            """\
-            Determines how ambiguous alignments should be treated. This setting mimics NGLess' behaviour.
-            - 'unique_only' ignores any alignment flagged as ambiguous (MAPQ=0). This is the default setting.
-            - 'all1' treats each alignment as unique (each ambiguous alignment contributes 1 count to features it aligns to.)
-            - 'primary_only' takes the unique alignments and the primary and alignment of each ambiguous read group.
-            - '1overN' each alignment contributes 1/(n=number of ambiguous alignments of the same read) counts to features it aligns to."""
-        ),
-    )
+    # ap.add_argument(
+    #     "--ambig_mode",
+    #     type=str,
+    #     choices=("unique_only", "all1", "primary_only", "1overN"),
+    #     default="unique_only",
+    #     help=textwrap.dedent(
+    #         """\
+    #         Determines how ambiguous alignments should be treated. This setting mimics NGLess' behaviour.
+    #         - 'unique_only' ignores any alignment flagged as ambiguous (MAPQ=0). This is the default setting.
+    #         - 'all1' treats each alignment as unique (each ambiguous alignment contributes 1 count to features it aligns to.)
+    #         - 'primary_only' takes the unique alignments and the primary and alignment of each ambiguous read group.
+    #         - '1overN' each alignment contributes 1/(n=number of ambiguous alignments of the same read) counts to features it aligns to."""
+    #     ),
+    # )
 
     ap.add_argument(
         "--strand_specific",
@@ -106,13 +106,13 @@ def handle_args(args):
         help="Format of the alignment input. Supported: fastq, sam, bam. Fastq files can be gzipped.",
     )
 
-    ap.add_argument(
-        "--paired_end_count",
-        type=int,
-        choices=(1, 2),
-        default=1,
-        help="Paired-end count contribution: 0.5 / mate (1) or 1 / mate (2) [1]",
-    )
+    # ap.add_argument(
+    #     "--paired_end_count",
+    #     type=int,
+    #     choices=(1, 2),
+    #     default=1,
+    #     help="Paired-end count contribution: 0.5 / mate (1) or 1 / mate (2) [1]",
+    # )
 
     # orphan reads will not have flag 0x1 set
     ap.add_argument(
@@ -128,7 +128,7 @@ def handle_args(args):
     )
 
     ap.add_argument(
-        "--cpus", "-t",
+        "--cpus_for_alignment", "-t",
         type=int, default=1,
         help="",
     )
