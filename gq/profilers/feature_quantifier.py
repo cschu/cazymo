@@ -126,7 +126,8 @@ class FeatureQuantifier:
 
     def process_counters(self, unannotated_ambig, aln_count):
         if self.adm is None:
-            self.adm = AnnotationDatabaseManager(self.db)
+            # self.adm = AnnotationDatabaseManager(self.db)
+            self.adm = AnnotationDatabaseManager.from_db(self.db)
 
         self.count_manager.dump_raw_counters(self.out_prefix, self.alp)
 

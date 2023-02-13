@@ -15,6 +15,7 @@ from gq.profilers import RegionQuantifier
 from gq.db import get_writable_database
 from gq.bin.build_bed_database import gather_category_and_feature_data, process_annotations
 from gq.db.models import db
+from gq.db.db_import import DomainBedDatabaseImporter
 
 from . import __version__
 from .handle_args import handle_args
@@ -49,17 +50,21 @@ def main():
             exist_ok=True, parents=True
         )
 
-    _, db_session = get_writable_database()
+    # _, db_session = get_writable_database()
+    db_session = contextlib.nullcontext()
 
     with db_session:
-        code_map, nseqs = gather_category_and_feature_data(args.annotation_db, db_session=db_session)
-        process_annotations(args.annotation_db, db_session, code_map, nseqs)
+        db_importer = DomainBedDatabaseImporter(logger)
+        db_importer.gather_category_and_feature_data(args.annotation_db)
+        db_importer.process_annotations(args.annotation_db)
+        # code_map, nseqs = gather_category_and_feature_data(args.annotation_db, db_session=db_session)
+        # process_annotations(args.annotation_db, db_session, code_map, nseqs)
 
-        print("QUERY", db_session.query(db.Feature).filter(db.Feature.id == 1).join(db.Category, db.Feature.category_id == db.Category.id).one_or_none().name)
-        logging.info("Finished loading database.")
+        # print("QUERY", db_session.query(db.Feature).filter(db.Feature.id == 1).join(db.Category, db.Feature.category_id == db.Category.id).one_or_none().name)
+        logger.info("Finished loading database.")
 
         fq = RegionQuantifier(
-            db=db_session,
+            db=db_importer,
             out_prefix=args.out_prefix,
             ambig_mode="1overN",
             strand_specific=args.strand_specific,

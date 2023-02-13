@@ -15,6 +15,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from gq.db import initialise_db
 from gq.db.models import db
 from ..db.models.meta import Base
+from gq.db.db_import import GqDatabaseImporter
 
 
 logging.basicConfig(
@@ -38,6 +39,35 @@ def get_database(db_path):
     Base.query = db_session.query_property()
 
     return engine, db_session
+
+
+class DomainBedDatabaseImporter(GqDatabaseImporter):
+	def __init__(self, logger, db_path=None, db_session=None, single_category="domain"):
+		super().__init__(logger, db_path=db_path, db_session=db_session)
+		self.single_category = single_category
+
+	def parse_categories(self, _in):
+		categories = {}
+		
+		for self.nseqs, line in enumerate(_in, start=1):
+			line = line.strip().split("\t")
+			categories.setdefault(self.single_category, set()).update(line[3].split(","))
+
+		self.logger.info("    Parsed %s entries.", self.nseqs)
+		return categories
+
+	def parse_annotations(self, _in):
+		annotations = {}	
+		for i, line in enumerate(_in, start=1):
+			if i % 10000 == 0 and self.db_session:
+				self.db_session.commit()
+			line = line.strip().split("\t")
+			gid, start, end, features = line
+			annotations.setdefault((gid, int(start) + 1 , int(end)), set()).update(features.split(","))
+
+		return annotations
+
+	
 
 
 def gather_category_and_feature_data(input_data, db_path=None, db_session=None):
