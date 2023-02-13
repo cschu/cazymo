@@ -23,7 +23,7 @@ class GqDatabaseImporter(ABC):
         self.features = {}
 
         self.gather_category_and_feature_data(input_data)
-        self.parse_annotations(input_data)
+        self.process_annotations(input_data)
 
     @staticmethod
     def get_open_function(f):
@@ -125,9 +125,9 @@ class GqDatabaseImporter(ABC):
 
 
 class DomainBedDatabaseImporter(GqDatabaseImporter):
-    def __init__(self, logger, db_path=None, db_session=None, single_category="domain"):
+    def __init__(self, logger, input_data, db_path=None, db_session=None, single_category="domain"):
         self.single_category = single_category
-        super().__init__(logger, db_path=db_path, db_session=db_session)
+        super().__init__(logger, input_data, db_path=db_path, db_session=db_session)
 
     def parse_categories(self, _in):
         categories = {}
