@@ -196,6 +196,9 @@ class FeatureQuantifier:
                 current_aln_group = AlignmentGroup()
                 read_count += 1
 
+                if read_count and read_count % 10000:
+                    logger.info("Processed %s reads.", read_count)
+
             current_aln_group.add_alignment(aln)
 
         if current_aln_group is not None:
