@@ -41,7 +41,7 @@ class AnnotationDatabaseManager(ABC):
         ...
 
     def query_sequence(self, seqid, start=None, end=None):        
-        db_sequence = self.sequence_query(seqid, start=start, end=end)
+        db_sequence = self.query_sequence_internal(seqid, start=start, end=end)
         
         if db_sequence is None:
             return None
