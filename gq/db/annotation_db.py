@@ -173,12 +173,12 @@ class Dict_ADM(AnnotationDatabaseManager):
         return self.db.annotations.get(seqid, [None])[0]
 
     def query_feature(self, feature_id):
-        return self.db.features.get(feature_id)
+        return self.db.features.get(int(feature_id))
 
     def query_category(self, category_id):
-        print("CATEGORY_ID", category_id, type(category_id), file=sys.stderr, flush=True)
-        print(self.categories)
-        return self.db.categories.get(category_id, file=sys.stderr, flush=True)
+        # print("CATEGORY_ID", category_id, type(category_id), file=sys.stderr, flush=True)
+        # print(self.categories)
+        return self.db.categories.get(int(category_id))
 
     @lru_cache(maxsize=10000)
     def get_db_sequence(self, seqid):
