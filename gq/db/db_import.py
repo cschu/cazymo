@@ -12,7 +12,7 @@ from .models import db
 
 
 class GqDatabaseImporter(ABC):
-    def __init__(self, logger, db_path=None, db_session=None):
+    def __init__(self, logger, input_data, db_path=None, db_session=None):
         self.logger = logger
         self.db_path = db_path
         self.db_session = db_session
@@ -21,6 +21,9 @@ class GqDatabaseImporter(ABC):
         self.nseqs = 0
         self.categories = {}
         self.features = {}
+
+        self.gather_category_and_feature_data(input_data)
+        self.parse_annotations(input_data)
 
     @staticmethod
     def get_open_function(f):
@@ -123,8 +126,8 @@ class GqDatabaseImporter(ABC):
 
 class DomainBedDatabaseImporter(GqDatabaseImporter):
     def __init__(self, logger, db_path=None, db_session=None, single_category="domain"):
-        super().__init__(logger, db_path=db_path, db_session=db_session)
         self.single_category = single_category
+        super().__init__(logger, db_path=db_path, db_session=db_session)
 
     def parse_categories(self, _in):
         categories = {}
