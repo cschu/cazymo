@@ -4,7 +4,7 @@ import json
 
 from abc import ABC, abstractmethod
 
-from models import db
+from .models import db
 
 
 class GqDatabaseImporter(ABC):
