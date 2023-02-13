@@ -3,6 +3,7 @@
 """ module docstring """
 
 import logging
+import sys
 
 from abc import ABC, abstractmethod
 from functools import lru_cache
@@ -175,7 +176,9 @@ class Dict_ADM(AnnotationDatabaseManager):
         return self.db.features.get(feature_id)
 
     def query_category(self, category_id):
-        return self.db.categories.get(category_id)
+        print("CATEGORY_ID", category_id, type(category_id), file=sys.stderr, flush=True)
+        print(self.categories)
+        return self.db.categories.get(category_id, file=sys.stderr, flush=True)
 
     @lru_cache(maxsize=10000)
     def get_db_sequence(self, seqid):
