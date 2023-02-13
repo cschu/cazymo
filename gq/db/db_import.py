@@ -82,7 +82,7 @@ class GqDatabaseImporter(ABC):
 			annotation_data = self.parse_annotations(_in)
 
 			for i, ((gid, start, end), features) in enumerate(annotation_data.items(), start=1):
-				if i % 10000 == 0:
+				if i % 100000 == 0:
 					if self.nseqs:
 						self.logger.info("Processed %s entries. (%s%%)", i, round(i / self.nseqs * 100, 3))
 					else:
