@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class AnnotationDatabaseManager(ABC):
-    def __init__(self, db_path):
+    def __init__(self):
         # self.db_session, self.db_dict = None, None
         # if isinstance(db_path, str):
         #     _, self.db_session = get_database(db_path)
