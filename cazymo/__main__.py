@@ -79,7 +79,7 @@ def main():
     try:
         logging.info("Initiated read alignment process.")
         read_processing_proc = subprocess.Popen(
-            "|".join(commands), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            " | ".join(commands), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         )
          
         with read_processing_proc:
