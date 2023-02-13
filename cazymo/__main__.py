@@ -3,7 +3,6 @@
 """ module docstring """
 
 import contextlib
-import json
 import logging
 import os
 import pathlib
@@ -12,9 +11,6 @@ import sys
 
 # pylint: disable=W0611
 from gq.profilers import RegionQuantifier
-from gq.db import get_writable_database
-from gq.bin.build_bed_database import gather_category_and_feature_data, process_annotations
-from gq.db.models import db
 from gq.db.db_import import DomainBedDatabaseImporter
 
 from . import __version__
@@ -57,7 +53,7 @@ def main():
         db_importer = DomainBedDatabaseImporter(logger)
         db_importer.gather_category_and_feature_data(args.annotation_db)
         db_importer.process_annotations(args.annotation_db)
-        # code_map, nseqs = gather_category_and_feature_data(args.annotation_db, db_session=db_session)
+        # code_map, nseqs = gather_category_and_feature_data(args.annotation_db, db_session=db_session)
         # process_annotations(args.annotation_db, db_session, code_map, nseqs)
 
         # print("QUERY", db_session.query(db.Feature).filter(db.Feature.id == 1).join(db.Category, db.Feature.category_id == db.Category.id).one_or_none().name)
@@ -82,7 +78,7 @@ def main():
         #     cmd += ["bedtools intersect -u -ubam -a stdin -b {args.annotation_db}"]
 
         # with subprocess.Popen(
-        #     "|".join(cmd), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,    
+        #     "|".join(cmd), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         # ) as align_flow:
         #     fq.process_bamfile(
 
@@ -90,7 +86,7 @@ def main():
 
         try:
 
-            # pylint: disable=E1124
+            # pylint: disable=E1124,R1732
             with subprocess.Popen(
                 ("bwa", "mem", "-a", "-t", f"{args.cpus_for_alignment}", "-K", "10000000", args.bwa_index, *args.input_files),
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -130,20 +126,18 @@ def main():
                     #         readcounts = json.loads(read_count_proc.stderr).get("n_reads")
                     #     except:
                     #         logger.warn("Could not access pre-filter readcounts. Using post-filter readcounts.")
-                            
+
                     fq.process_bamfile(
                         align_stream,
                         aln_format="bam",
                         min_identity=args.min_identity, min_seqlen=args.min_seqlen,
-                        external_readcounts=None if args.no_prefilter else (args.out_prefix + ".readcount.json") # read_count_proc.stderr.read().decode(),
+                        external_readcounts=None if args.no_prefilter else (args.out_prefix + ".readcount.json")
                     )
 
         except Exception as err:
             logger.error("Caught exception:")
             logger.error("%s", err)
             raise Exception from err
-
-
 
             # with subprocess.Popen(
             #     ("samtools", "view", "-F", "4", "-buSh", "-"),

@@ -3,7 +3,6 @@
 """ module docstring """
 
 import logging
-import sys
 
 from abc import ABC, abstractmethod
 from functools import lru_cache
@@ -32,18 +31,17 @@ class AnnotationDatabaseManager(ABC):
     def from_db(cls, db_path):
         if isinstance(db_path, str):
             return SQL_ADM(get_database(db_path)[1])
-        elif isinstance(db_path, GqDatabaseImporter):
+        if isinstance(db_path, GqDatabaseImporter):
             return Dict_ADM(db_path)
-        else:
-            return SQL_ADM(db_path)
+        return SQL_ADM(db_path)
 
     @abstractmethod
     def query_sequence_internal(self, seqid, start=None, end=None):
         ...
 
-    def query_sequence(self, seqid, start=None, end=None):        
+    def query_sequence(self, seqid, start=None, end=None):
         db_sequence = self.query_sequence_internal(seqid, start=start, end=end)
-        
+
         if db_sequence is None:
             return None
         categories = tuple()
@@ -55,7 +53,7 @@ class AnnotationDatabaseManager(ABC):
     @abstractmethod
     def query_feature(self, feature_id):
         ...
-    
+
     @abstractmethod
     def query_category(self, category_id):
         ...
@@ -70,7 +68,7 @@ class AnnotationDatabaseManager(ABC):
     @abstractmethod
     def get_db_sequence(self, seqid):
         ...
-    
+
     def get_interval_overlaps(self, seqid, qstart, qend, calc_coverage=True):
         db_sequences = self.get_db_sequence(seqid)
 
@@ -150,7 +148,7 @@ class SQL_ADM(AnnotationDatabaseManager):
 
     def query_feature(self, feature_id):
         return self.db_session.query(db.Feature).filter(db.Feature.id == feature_id).join(db.Category, db.Feature.category_id == db.Category.id).one_or_none()
-    
+
     def query_category(self, category_id):
         return self.db_session.query(db.Category).filter(db.Category.id == category_id).one_or_none()
 
@@ -159,12 +157,10 @@ class SQL_ADM(AnnotationDatabaseManager):
         return self.db_session.query(db.AnnotatedSequence).filter(db.AnnotatedSequence.seqid == seqid).all()
 
 
-
 class Dict_ADM(AnnotationDatabaseManager):
     def __init__(self, db_path):
         super().__init__()
         self.db = db_path
-        
 
     def query_sequence_internal(self, seqid, start=None, end=None):
         if start is not None and end is not None:
@@ -176,8 +172,6 @@ class Dict_ADM(AnnotationDatabaseManager):
         return self.db.features.get(int(feature_id))
 
     def query_category(self, category_id):
-        # print("CATEGORY_ID", category_id, type(category_id), file=sys.stderr, flush=True)
-        # print(self.categories)
         return self.db.categories.get(int(category_id))
 
     @lru_cache(maxsize=10000)
