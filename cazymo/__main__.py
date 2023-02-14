@@ -2,8 +2,6 @@
 
 """ module docstring """
 
-import contextlib
-import json
 import logging
 import os
 import pathlib
@@ -12,9 +10,7 @@ import sys
 
 # pylint: disable=W0611
 from gq.profilers import RegionQuantifier
-from gq.db import get_writable_database
-from gq.bin.build_bed_database import gather_category_and_feature_data, process_annotations
-from gq.db.models import db
+from gq.db.db_import import DomainBedDatabaseImporter
 
 from . import __version__
 from .handle_args import handle_args
@@ -49,120 +45,48 @@ def main():
             exist_ok=True, parents=True
         )
 
-    _, db_session = get_writable_database()
+    db_importer = DomainBedDatabaseImporter(logger, args.annotation_db)
+    logger.info("Finished loading database.")
 
-    with db_session:
-        code_map, nseqs = gather_category_and_feature_data(args.annotation_db, db_session=db_session)
-        process_annotations(args.annotation_db, db_session, code_map, nseqs)
+    fq = RegionQuantifier(
+        db=db_importer,
+        out_prefix=args.out_prefix,
+        ambig_mode="1overN",
+        strand_specific=args.strand_specific,
+        unmarked_orphans=args.unmarked_orphans,
+        reference_type="domain",
+    )
 
-        print("QUERY", db_session.query(db.Feature).filter(db.Feature.id == 1).join(db.Category, db.Feature.category_id == db.Category.id).one_or_none().name)
-        logging.info("Finished loading database.")
+    samtools_io_flags = "-buSh" if args.no_prefilter else "-Sh"
 
-        fq = RegionQuantifier(
-            db=db_session,
-            out_prefix=args.out_prefix,
-            ambig_mode="1overN",
-            strand_specific=args.strand_specific,
-            unmarked_orphans=args.unmarked_orphans,
-            reference_type="domain",
-        )
+    commands = [
+        f"bwa mem -a -t {args.cpus_for_alignment} -K 10000000 {args.bwa_index} {' '.join(args.input_files)}",
+        f"samtools view -F 4 {samtools_io_flags} -",
+    ]
 
-        # cmd = [f"bwa mem -a -t {args.cpus} -K 10000000 {args.bwa_index} {' '.join(args.input_files)}"]
-        # if args.no_prefilter:
-        #     cmd += ["samtools view -F 4 -buSh -"]
-        # else:
-        #     cmd += ["samtools view -F 4 -Sh -"]
-        #     cmd += ["count_reads"]
-        #     cmd += ["samtools view -buSh -"]
-        #     cmd += ["bedtools intersect -u -ubam -a stdin -b {args.annotation_db}"]
+    if not args.no_prefilter:
+        logging.info("Prefiltering activated.")
+        commands += [
+            f"read_count {args.out_prefix}",
+            "samtools view -buSh -",
+            f"bedtools intersect -u -ubam -a stdin -b {args.annotation_db}",
+        ]
 
-        # with subprocess.Popen(
-        #     "|".join(cmd), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,    
-        # ) as align_flow:
-        #     fq.process_bamfile(
+    logger.info("Used command: %s", " | ".join(commands))
 
-        #     )
+    try:
+        with subprocess.Popen(" | ".join(commands), shell=True, stdout=subprocess.PIPE) as read_processing_proc:
+            fq.process_bamfile(
+                read_processing_proc.stdout,
+                aln_format="bam",
+                min_identity=args.min_identity, min_seqlen=args.min_seqlen,
+                external_readcounts=None if args.no_prefilter else (args.out_prefix + ".readcount.json"),
+            )
 
-        try:
-
-            # pylint: disable=E1124
-            with subprocess.Popen(
-                ("bwa", "mem", "-a", "-t", f"{args.cpus_for_alignment}", "-K", "10000000", args.bwa_index, *args.input_files),
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            ) as bwa_proc:
-                if args.no_prefilter:
-                    samtools_filter_proc = subprocess.Popen(
-                        ("samtools", "view", "-F 4", "-buSh", "-",), stdin=bwa_proc.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                    )
-                    read_count_proc = contextlib.nullcontext()
-                    samtools_convert_proc = contextlib.nullcontext()
-                    bedtools_proc = contextlib.nullcontext()
-
-                    align_stream = samtools_filter_proc.stdout
-                else:
-                    logging.info("Prefiltering activated.")
-                    samtools_filter_proc = subprocess.Popen(
-                        ("samtools", "view", "-F 4", "-Sh", "-",), stdin=bwa_proc.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                    )
-                    read_count_proc = subprocess.Popen(
-                        ("read_count", args.out_prefix), stdin=samtools_filter_proc.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                    )
-                    samtools_convert_proc = subprocess.Popen(
-                        ("samtools", "view", "-buSh", "-",), stdin=read_count_proc.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                    )
-                    bedtools_proc = subprocess.Popen(
-                        ("bedtools", "intersect", "-u", "-ubam", "-a", "stdin", "-b", f"{args.annotation_db}",),
-                        stdin=samtools_convert_proc.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                    )
-                    align_stream = bedtools_proc.stdout
-
-                # with samtools_filter_proc, read_count_proc, samtools_convert_proc, bedtools_proc:
-                with bedtools_proc:
-                    # readcounts = None
-                    # if not args.no_prefilter:
-                    #     try:
-                    #         # readcounts = json.loads(open(args.out_prefix + ".readcount.json", "rt")).get("n_reads", 0)
-                    #         readcounts = json.loads(read_count_proc.stderr).get("n_reads")
-                    #     except:
-                    #         logger.warn("Could not access pre-filter readcounts. Using post-filter readcounts.")
-                            
-                    fq.process_bamfile(
-                        align_stream,
-                        aln_format="bam",
-                        min_identity=args.min_identity, min_seqlen=args.min_seqlen,
-                        external_readcounts=None if args.no_prefilter else (args.out_prefix + ".readcount.json") # read_count_proc.stderr.read().decode(),
-                    )
-
-        except Exception as err:
-            logger.error("Caught exception:")
-            logger.error("%s", err)
-            raise Exception from err
-
-
-
-            # with subprocess.Popen(
-            #     ("samtools", "view", "-F", "4", "-buSh", "-"),
-            #     stdin=bwa_proc.stdout, stdout=subprocess.PIPE
-            # ) as samtools_proc:
-            #     if args.no_prefilter:
-            #         bedtools_proc = contextlib.nullcontext()
-            #         fq_input = samtools_proc.stdout
-            #     else:
-            #         logging.info("Prefiltering activated.")
-            #         bedtools_proc = subprocess.Popen(
-            #             ("bedtools", "intersect", "-u", "-ubam", "-a", "stdin", "-b", f"{args.annotation_db}"),
-            #             stdin=samtools_proc.stdout, stdout=subprocess.PIPE
-            #         )
-            #         # bedtools intersect -u -ubam -a ${bam} -b ${db_bedfile} > filtered_bam/${sample}.bam
-
-            #         fq_input = bedtools_proc.stdout
-
-            #     with bedtools_proc:
-            #         fq.process_bamfile(
-            #             fq_input,
-            #             aln_format="bam",
-            #             min_identity=args.min_identity, min_seqlen=args.min_seqlen
-            #         )
+    except Exception as err:
+        logger.error("Caught some exception:")
+        logger.error("%s", err)
+        raise Exception from err
 
 
 if __name__ == "__main__":

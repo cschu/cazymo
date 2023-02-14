@@ -39,7 +39,7 @@ def main():
     }
     print(json.dumps(counts), file=sys.stderr)
 
-    with open(f"{sys.argv[1]}.readcount.json", "wt") as json_out:
+    with open(f"{sys.argv[1]}.readcount.json", "wt", encoding="UTF-8") as json_out:
         print(json.dumps(counts), file=json_out)
 
 

@@ -14,6 +14,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 
 from gq.db import initialise_db
 from gq.db.models import db
+
 from ..db.models.meta import Base
 
 
