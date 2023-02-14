@@ -18,13 +18,6 @@ logger = logging.getLogger(__name__)
 
 class AnnotationDatabaseManager(ABC):
     def __init__(self):
-        # self.db_session, self.db_dict = None, None
-        # if isinstance(db_path, str):
-        #     _, self.db_session = get_database(db_path)
-        # elif isinstance(db_path, GqDatabaseImporter):
-        #     self.db_dict = {"code_map": db_path.code_map, "annotations": db_path.annotations}
-        # else:
-        #     self.db_session = db_path
         ...
 
     @classmethod
