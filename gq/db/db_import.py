@@ -92,9 +92,9 @@ class GqDatabaseImporter(ABC):
             for i, ((gid, start, end), features) in enumerate(annotation_data.items(), start=1):
                 if i % 100000 == 0:
                     if self.nseqs:
-                        self.logger.info("    Processed %s entries. (%s%%)", i, round(i / self.nseqs * 100, 3))
+                        self.logger.info("    Loaded %s entries. (%s%%)", i, round(i / self.nseqs * 100, 3))
                     else:
-                        self.logger.info("    Processed %s entries.", str(i))
+                        self.logger.info("    Loaded %s entries.", str(i))
 
                 encoded = []
                 enc_category = self.code_map["domain"]['key']
@@ -116,9 +116,9 @@ class GqDatabaseImporter(ABC):
                     self.db_session.add(db_sequence)
 
             if self.nseqs:
-                self.logger.info("    Processed %s entries. (%s%%)", i, round(i / self.nseqs * 100, 3))
+                self.logger.info("    Loaded %s entries. (%s%%)", i, round(i / self.nseqs * 100, 3))
             else:
-                self.logger.info("    Processed %s entries.", str(i))
+                self.logger.info("    Loaded %s entries.", str(i))
 
             if self.db_session:
                 self.db_session.commit()
