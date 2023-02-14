@@ -2,8 +2,6 @@
 
 """ module docstring """
 
-import contextlib
-import io
 import logging
 import os
 import pathlib
@@ -70,16 +68,16 @@ def main():
         logging.info("Prefiltering activated.")
         commands += [
             f"read_count {args.out_prefix}",
-            f"samtools view -buSh -",
+            "samtools view -buSh -",
             f"bedtools intersect -u -ubam -a stdin -b {args.annotation_db}",
         ]
 
     logger.info("Used command: %s", " | ".join(commands))
-        
+
     try:
         with subprocess.Popen(" | ".join(commands), shell=True, stdout=subprocess.PIPE) as read_processing_proc:
             fq.process_bamfile(
-                read_processing_proc.stdout, #.fileno(),
+                read_processing_proc.stdout,
                 aln_format="bam",
                 min_identity=args.min_identity, min_seqlen=args.min_seqlen,
                 external_readcounts=None if args.no_prefilter else (args.out_prefix + ".readcount.json"),
