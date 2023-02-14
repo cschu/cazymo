@@ -31,7 +31,7 @@ export PATH=$PATH:/opt/software/miniconda3/bin
   /opt/software/miniconda3/bin/conda install -y -c bioconda 'samtools>=1.13' bwa minimap2 bwa-mem2 bedtools
   git clone https://github.com/cschu/cazymo.git
   cd cazymo
-  git checkout feature/allow_dict_based_db_20230213
+  git checkout 5e466316d7695fd7361fdf3e242c7537d5b988bb
   # /opt/software/miniconda3/bin/python setup.py bdist_wheel
   /opt/software/miniconda3/bin/pip install -e .
   cd ..
