@@ -60,7 +60,7 @@ def main():
     samtools_io_flags = "-buSh" if args.no_prefilter else "-Sh"
 
     commands = [
-        f"bwa mem -a -t {args.cpus_for_alignment} -K 10000000 {args.bwa_index} {' '.join(args.input_files)}",
+        f"bwa mem -v 1 -a -t {args.cpus_for_alignment} -K 10000000 {args.bwa_index} {' '.join(args.input_files)}",
         f"samtools view -F 4 {samtools_io_flags} -",
     ]
 
