@@ -125,11 +125,12 @@ class FeatureQuantifier:
 
             yield ({rid: hits}, aln_count, 0 if aln_count else 1)
 
-    def process_counters(self, unannotated_ambig, aln_count, restrict_reports=None, report_category=True, report_unannotated=True):
+    def process_counters(self, unannotated_ambig, aln_count, restrict_reports=None, report_category=True, report_unannotated=True, dump_counters=True):
         if self.adm is None:
             self.adm = AnnotationDatabaseManager.from_db(self.db)
 
-        self.count_manager.dump_raw_counters(self.out_prefix, self.alp)
+        if dump_counters:
+            self.count_manager.dump_raw_counters(self.out_prefix, self.alp)
 
         cov_ctr = CoverageCounter() if self.calc_coverage else None
 
@@ -215,7 +216,8 @@ class FeatureQuantifier:
 
         return aln_count, read_count, 0, None
 
-    def process_bamfile(self, bamfile, aln_format="sam", min_identity=None, min_seqlen=None, external_readcounts=None, restrict_reports=None, report_category=True, report_unannotated=True):
+    def process_bamfile(self, bamfile, aln_format="sam", min_identity=None, min_seqlen=None, external_readcounts=None, restrict_reports=None, report_category=False, report_unannotated=False, dump_counters=False):
+        # default: specific report rows are disabled otherwise specific tools have too many confusing user-exposed parameters
         """processes one bamfile"""
 
         self.alp = AlignmentProcessor(bamfile, aln_format)
@@ -251,6 +253,7 @@ class FeatureQuantifier:
                 restrict_reports=restrict_reports,
                 report_category=report_category, 
                 report_unannotated=report_unannotated,
+                dump_counters=dump_counters,
             )
 
         logger.info("Finished.")
