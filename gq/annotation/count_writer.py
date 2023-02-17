@@ -1,4 +1,4 @@
-# pylint: disable=C0103,W1514
+# pylint: disable=C0103,W1514,R0913
 
 """ module docstring """
 
@@ -14,7 +14,15 @@ logger = logging.getLogger(__name__)
 class CountWriter:
     COUNT_HEADER_ELEMENTS = ["raw", "lnorm", "scaled", "rpkm"]
 
-    def __init__(self, prefix, aln_count, has_ambig_counts=False, strand_specific=False, restrict_reports=None, report_category=True, report_unannotated=True):
+    def __init__(
+        self, prefix,
+        aln_count,
+        has_ambig_counts=False,
+        strand_specific=False,
+        restrict_reports=None,
+        report_category=True,
+        report_unannotated=True,
+    ):
         self.out_prefix = prefix
         self.aln_count = aln_count
         self.has_ambig_counts = has_ambig_counts

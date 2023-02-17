@@ -1,4 +1,4 @@
-# pylint: disable=C0103,W0105
+# pylint: disable=C0103,W0105,R0902
 
 """ This module contains code for transforming gene counts to feature counts. """
 

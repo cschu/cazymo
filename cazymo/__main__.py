@@ -81,7 +81,7 @@ def main():
                 aln_format="bam",
                 min_identity=args.min_identity, min_seqlen=args.min_seqlen,
                 external_readcounts=None if args.no_prefilter else (args.out_prefix + ".readcount.json"),
-                restrict_reports=("rpkm",),                
+                restrict_reports=("rpkm",),
             )
 
     except Exception as err:

@@ -1,4 +1,4 @@
-# pylint: disable=C0103
+# pylint: disable=C0103,R0914
 
 """ module docstring """
 
@@ -125,7 +125,15 @@ class FeatureQuantifier:
 
             yield ({rid: hits}, aln_count, 0 if aln_count else 1)
 
-    def process_counters(self, unannotated_ambig, aln_count, restrict_reports=None, report_category=True, report_unannotated=True, dump_counters=True):
+    def process_counters(
+        self,
+        unannotated_ambig,
+        aln_count,
+        restrict_reports=None,
+        report_category=True,
+        report_unannotated=True,
+        dump_counters=True,
+    ):
         if self.adm is None:
             self.adm = AnnotationDatabaseManager.from_db(self.db)
 
@@ -156,7 +164,7 @@ class FeatureQuantifier:
         count_writer.write_feature_counts(
             self.adm,
             self.count_manager.get_unannotated_reads() + unannotated_ambig,
-            count_annotator,            
+            count_annotator,
         )
 
         count_writer.write_gene_counts(
@@ -218,8 +226,20 @@ class FeatureQuantifier:
 
         return aln_count, read_count, 0, None
 
-    def process_bamfile(self, bamfile, aln_format="sam", min_identity=None, min_seqlen=None, external_readcounts=None, restrict_reports=None, report_category=False, report_unannotated=False, dump_counters=False):
-        # default: specific report rows are disabled otherwise specific tools have too many confusing user-exposed parameters
+    def process_bamfile(
+        self,
+        bamfile,
+        aln_format="sam",
+        min_identity=None,
+        min_seqlen=None,
+        external_readcounts=None,
+        restrict_reports=None,
+        report_category=False,
+        report_unannotated=False,
+        dump_counters=False
+    ):
+        # default: specific report rows are disabled
+        # otherwise specific tools have too many confusing user-exposed parameters
         """processes one bamfile"""
 
         self.alp = AlignmentProcessor(bamfile, aln_format)
@@ -253,7 +273,7 @@ class FeatureQuantifier:
                 unannotated_ambig,
                 aln_count=read_count,
                 restrict_reports=restrict_reports,
-                report_category=report_category, 
+                report_category=report_category,
                 report_unannotated=report_unannotated,
                 dump_counters=dump_counters,
             )
