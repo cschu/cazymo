@@ -213,7 +213,7 @@ class FeatureQuantifier:
 
         return aln_count, read_count, 0, None
 
-    def process_bamfile(self, bamfile, aln_format="sam", min_identity=None, min_seqlen=None, external_readcounts=None, restrict_reports=None):
+    def process_bamfile(self, bamfile, aln_format="sam", min_identity=None, min_seqlen=None, external_readcounts=None, restrict_reports=None, report_category=True, report_unannotated=True):
         """processes one bamfile"""
 
         self.alp = AlignmentProcessor(bamfile, aln_format)
@@ -247,6 +247,8 @@ class FeatureQuantifier:
                 unannotated_ambig,
                 aln_count=read_count,
                 restrict_reports=restrict_reports,
+                report_category=report_category, 
+                report_unannotated=report_unannotated,
             )
 
         logger.info("Finished.")
