@@ -125,7 +125,7 @@ class FeatureQuantifier:
 
             yield ({rid: hits}, aln_count, 0 if aln_count else 1)
 
-    def process_counters(self, unannotated_ambig, aln_count, restrict_reports=None):
+    def process_counters(self, unannotated_ambig, aln_count, restrict_reports=None, report_category=True, report_unannotated=True):
         if self.adm is None:
             self.adm = AnnotationDatabaseManager.from_db(self.db)
 
@@ -145,7 +145,9 @@ class FeatureQuantifier:
             aln_count,
             has_ambig_counts=self.count_manager.has_ambig_counts(),
             strand_specific=self.strand_specific,
-            restrict_reports=restrict_reports,            
+            restrict_reports=restrict_reports,
+            report_category=report_category,
+            report_unannotated=report_unannotated,
         )
 
         count_writer.write_feature_counts(
