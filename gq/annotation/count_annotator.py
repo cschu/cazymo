@@ -187,8 +187,8 @@ class CountAnnotator(dict):
 class RegionCountAnnotator(CountAnnotator):
     """ CountAnnotator subclass for contig/region-based counting. """
 
-    def __init__(self, strand_specific):
-        CountAnnotator.__init__(self, strand_specific)
+    def __init__(self, strand_specific, report_scaling_factors=True):
+        CountAnnotator.__init__(self, strand_specific, report_scaling_factors=report_scaling_factors)
 
     # pylint: disable=R0914
     def annotate(self, bam, db, count_manager, coverage_counter=None):
@@ -269,8 +269,8 @@ class RegionCountAnnotator(CountAnnotator):
 class GeneCountAnnotator(CountAnnotator):
     """ CountAnnotator subclass for gene-based counting. """
 
-    def __init__(self, strand_specific):
-        CountAnnotator.__init__(self, strand_specific)
+    def __init__(self, strand_specific, report_scaling_factors=True):
+        CountAnnotator.__init__(self, strand_specific, report_scaling_factors=report_scaling_factors)
 
     def annotate(self, bam, db, count_manager):
         """

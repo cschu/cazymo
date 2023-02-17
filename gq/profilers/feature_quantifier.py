@@ -134,11 +134,13 @@ class FeatureQuantifier:
 
         cov_ctr = CoverageCounter() if self.calc_coverage else None
 
+        report_scaling_factors = restrict_reports is None or "scaled" in restrict_reports
+
         if self.do_overlap_detection:
-            count_annotator = RegionCountAnnotator(self.strand_specific)
+            count_annotator = RegionCountAnnotator(self.strand_specific, report_scaling_factors=report_scaling_factors)
             count_annotator.annotate(self.alp, self.adm, self.count_manager, coverage_counter=cov_ctr)
         else:
-            count_annotator = GeneCountAnnotator(self.strand_specific)
+            count_annotator = GeneCountAnnotator(self.strand_specific, report_scaling_factors=report_scaling_factors)
             count_annotator.annotate(self.alp, self.adm, self.count_manager)
 
         count_writer = CountWriter(
