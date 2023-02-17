@@ -258,7 +258,7 @@ class FeatureQuantifier:
                 if os.path.isfile(external_readcounts):
                     try:
                         with open(external_readcounts, encoding="UTF-8") as read_counts_in:
-                            read_count = json.load(read_counts_in).get("n_reads")
+                            read_count = json.load(read_counts_in)["n_reads"]
                         logger.info("Using pre-filter readcounts (%s).", read_count)
                     except Exception as err:
                         print(f"Error accessing readcounts: {err}")
