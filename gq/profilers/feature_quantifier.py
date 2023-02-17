@@ -1,10 +1,11 @@
-# pylint: disable=C0103
+# pylint: disable=C0103,R0914
 
 """ module docstring """
 
 import gzip
 import json
 import logging
+import os
 import time
 
 from gq.db.annotation_db import AnnotationDatabaseManager
@@ -124,19 +125,30 @@ class FeatureQuantifier:
 
             yield ({rid: hits}, aln_count, 0 if aln_count else 1)
 
-    def process_counters(self, unannotated_ambig, aln_count):
+    def process_counters(
+        self,
+        unannotated_ambig,
+        aln_count,
+        restrict_reports=None,
+        report_category=True,
+        report_unannotated=True,
+        dump_counters=True,
+    ):
         if self.adm is None:
             self.adm = AnnotationDatabaseManager.from_db(self.db)
 
-        self.count_manager.dump_raw_counters(self.out_prefix, self.alp)
+        if dump_counters:
+            self.count_manager.dump_raw_counters(self.out_prefix, self.alp)
 
         cov_ctr = CoverageCounter() if self.calc_coverage else None
 
+        report_scaling_factors = restrict_reports is None or "scaled" in restrict_reports
+
         if self.do_overlap_detection:
-            count_annotator = RegionCountAnnotator(self.strand_specific)
+            count_annotator = RegionCountAnnotator(self.strand_specific, report_scaling_factors=report_scaling_factors)
             count_annotator.annotate(self.alp, self.adm, self.count_manager, coverage_counter=cov_ctr)
         else:
-            count_annotator = GeneCountAnnotator(self.strand_specific)
+            count_annotator = GeneCountAnnotator(self.strand_specific, report_scaling_factors=report_scaling_factors)
             count_annotator.annotate(self.alp, self.adm, self.count_manager)
 
         count_writer = CountWriter(
@@ -144,6 +156,9 @@ class FeatureQuantifier:
             aln_count,
             has_ambig_counts=self.count_manager.has_ambig_counts(),
             strand_specific=self.strand_specific,
+            restrict_reports=restrict_reports,
+            report_category=report_category,
+            report_unannotated=report_unannotated,
         )
 
         count_writer.write_feature_counts(
@@ -211,7 +226,20 @@ class FeatureQuantifier:
 
         return aln_count, read_count, 0, None
 
-    def process_bamfile(self, bamfile, aln_format="sam", min_identity=None, min_seqlen=None, external_readcounts=None):
+    def process_bamfile(
+        self,
+        bamfile,
+        aln_format="sam",
+        min_identity=None,
+        min_seqlen=None,
+        external_readcounts=None,
+        restrict_reports=None,
+        report_category=False,
+        report_unannotated=False,
+        dump_counters=False
+    ):
+        # default: specific report rows are disabled
+        # otherwise specific tools have too many confusing user-exposed parameters
         """processes one bamfile"""
 
         self.alp = AlignmentProcessor(bamfile, aln_format)
@@ -227,20 +255,27 @@ class FeatureQuantifier:
         # need to figure out what exceptions to catch...
         if aln_count:
             if external_readcounts is not None:
-                try:
-                    with open(external_readcounts, encoding="UTF-8") as read_counts_in:
-                        read_count = json.load(read_counts_in).get("n_reads")
-                    logger.info("Using pre-filter readcounts (%s).", read_count)
-                except Exception as err:
-                    print(f"Error accessing readcounts: {err}")
-                    logger.warning(
-                        "Could not access pre-filter readcounts. Using post-filter readcounts (%s).",
-                        read_count
-                    )
+                if os.path.isfile(external_readcounts):
+                    try:
+                        with open(external_readcounts, encoding="UTF-8") as read_counts_in:
+                            read_count = json.load(read_counts_in)["n_reads"]
+                        logger.info("Using pre-filter readcounts (%s).", read_count)
+                    except Exception as err:
+                        print(f"Error accessing readcounts: {err}")
+                        logger.warning(
+                            "Could not access pre-filter readcounts. Using post-filter readcounts (%s).",
+                            read_count
+                        )
+                else:
+                    read_count = int(external_readcounts)
 
             self.process_counters(
                 unannotated_ambig,
                 aln_count=read_count,
+                restrict_reports=restrict_reports,
+                report_category=report_category,
+                report_unannotated=report_unannotated,
+                dump_counters=dump_counters,
             )
 
         logger.info("Finished.")

@@ -45,7 +45,7 @@ def main():
             exist_ok=True, parents=True
         )
 
-    db_importer = DomainBedDatabaseImporter(logger, args.annotation_db)
+    db_importer = DomainBedDatabaseImporter(logger, args.annotation_db, single_category="cazy")
     logger.info("Finished loading database.")
 
     fq = RegionQuantifier(
@@ -60,7 +60,7 @@ def main():
     samtools_io_flags = "-buSh" if args.no_prefilter else "-Sh"
 
     commands = [
-        f"bwa mem -a -t {args.cpus_for_alignment} -K 10000000 {args.bwa_index} {' '.join(args.input_files)}",
+        f"bwa mem -v 1 -a -t {args.cpus_for_alignment} -K 10000000 {args.bwa_index} {' '.join(args.input_files)}",
         f"samtools view -F 4 {samtools_io_flags} -",
     ]
 
@@ -81,6 +81,7 @@ def main():
                 aln_format="bam",
                 min_identity=args.min_identity, min_seqlen=args.min_seqlen,
                 external_readcounts=None if args.no_prefilter else (args.out_prefix + ".readcount.json"),
+                restrict_reports=("rpkm",),
             )
 
     except Exception as err:
