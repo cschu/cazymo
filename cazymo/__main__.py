@@ -45,7 +45,7 @@ def main():
             exist_ok=True, parents=True
         )
 
-    db_importer = DomainBedDatabaseImporter(logger, args.annotation_db)
+    db_importer = DomainBedDatabaseImporter(logger, args.annotation_db, single_category="cazy")
     logger.info("Finished loading database.")
 
     fq = RegionQuantifier(
