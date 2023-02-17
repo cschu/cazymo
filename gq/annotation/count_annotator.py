@@ -32,7 +32,7 @@ normalizeCounts nmethod counts sizes
 class CountAnnotator(dict):
     """ CountAnnotator is the parent class for the two different count annotators. """
 
-    def __init__(self, strand_specific):
+    def __init__(self, strand_specific, report_scaling_factors=True):
         """
         input:
         - strand_specific: true | false
@@ -48,6 +48,7 @@ class CountAnnotator(dict):
         self.feature_count_sums = {}
         self.scaling_factors = {}
         self.gene_counts = {}
+        self.report_scaling_factors = report_scaling_factors
 
     def distribute_feature_counts(self, counts, region_annotation):
         """
@@ -132,11 +133,12 @@ class CountAnnotator(dict):
                 )
             )
 
-            logger.info(
-                "Calculating scaling factors for category=%s: uraw=%s unorm=%s araw=%s anorm=%s -> factors=%s",
-                category, total_uniq, total_uniq_normed,
-                total_ambi, total_ambi_normed, self.scaling_factors[category]
-            )
+            if self.report_scaling_factors:
+                logger.info(
+                    "Calculating scaling factors for category=%s: uraw=%s unorm=%s araw=%s anorm=%s -> factors=%s",
+                    category, total_uniq, total_uniq_normed,
+                    total_ambi, total_ambi_normed, self.scaling_factors[category]
+                )
 
     # pylint: disable=R0913
     def compute_count_vector(

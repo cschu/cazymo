@@ -5,6 +5,7 @@
 import gzip
 import json
 import logging
+import os
 import time
 
 from gq.db.annotation_db import AnnotationDatabaseManager
@@ -124,7 +125,7 @@ class FeatureQuantifier:
 
             yield ({rid: hits}, aln_count, 0 if aln_count else 1)
 
-    def process_counters(self, unannotated_ambig, aln_count):
+    def process_counters(self, unannotated_ambig, aln_count, restrict_reports=None):
         if self.adm is None:
             self.adm = AnnotationDatabaseManager.from_db(self.db)
 
@@ -144,12 +145,13 @@ class FeatureQuantifier:
             aln_count,
             has_ambig_counts=self.count_manager.has_ambig_counts(),
             strand_specific=self.strand_specific,
+            restrict_reports=restrict_reports,            
         )
 
         count_writer.write_feature_counts(
             self.adm,
             self.count_manager.get_unannotated_reads() + unannotated_ambig,
-            count_annotator,
+            count_annotator,            
         )
 
         count_writer.write_gene_counts(
@@ -211,7 +213,7 @@ class FeatureQuantifier:
 
         return aln_count, read_count, 0, None
 
-    def process_bamfile(self, bamfile, aln_format="sam", min_identity=None, min_seqlen=None, external_readcounts=None):
+    def process_bamfile(self, bamfile, aln_format="sam", min_identity=None, min_seqlen=None, external_readcounts=None, restrict_reports=None):
         """processes one bamfile"""
 
         self.alp = AlignmentProcessor(bamfile, aln_format)
@@ -227,20 +229,24 @@ class FeatureQuantifier:
         # need to figure out what exceptions to catch...
         if aln_count:
             if external_readcounts is not None:
-                try:
-                    with open(external_readcounts, encoding="UTF-8") as read_counts_in:
-                        read_count = json.load(read_counts_in).get("n_reads")
-                    logger.info("Using pre-filter readcounts (%s).", read_count)
-                except Exception as err:
-                    print(f"Error accessing readcounts: {err}")
-                    logger.warning(
-                        "Could not access pre-filter readcounts. Using post-filter readcounts (%s).",
-                        read_count
-                    )
+                if os.path.isfile(external_readcounts):
+                    try:
+                        with open(external_readcounts, encoding="UTF-8") as read_counts_in:
+                            read_count = json.load(read_counts_in).get("n_reads")
+                        logger.info("Using pre-filter readcounts (%s).", read_count)
+                    except Exception as err:
+                        print(f"Error accessing readcounts: {err}")
+                        logger.warning(
+                            "Could not access pre-filter readcounts. Using post-filter readcounts (%s).",
+                            read_count
+                        )
+                else:
+                    read_count = int(external_readcounts)
 
             self.process_counters(
                 unannotated_ambig,
                 aln_count=read_count,
+                restrict_reports=restrict_reports,
             )
 
         logger.info("Finished.")

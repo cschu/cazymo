@@ -14,61 +14,76 @@ logger = logging.getLogger(__name__)
 class CountWriter:
     COUNT_HEADER_ELEMENTS = ["raw", "lnorm", "scaled", "rpkm"]
 
-    def __init__(self, prefix, aln_count, has_ambig_counts=False, strand_specific=False):
+    def __init__(self, prefix, aln_count, has_ambig_counts=False, strand_specific=False, restrict_reports=None):
         self.out_prefix = prefix
         self.aln_count = aln_count
         self.has_ambig_counts = has_ambig_counts
         self.strand_specific = strand_specific
+        self.publish_reports = [
+            item for item in CountWriter.COUNT_HEADER_ELEMENTS
+            if restrict_reports is None or item in restrict_reports
+        ]
 
     def get_header(self):
+        reports = self.publish_reports
         header = []
-        header += (f"uniq_{element}" for element in CountWriter.COUNT_HEADER_ELEMENTS)
+        header += (f"uniq_{element}" for element in reports)
         if self.has_ambig_counts:
-            header += (
-                f"combined_{element}" for element in CountWriter.COUNT_HEADER_ELEMENTS
-            )
+            header += (f"combined_{element}" for element in reports)
         if self.strand_specific:
             for strand in ("ss", "as"):
-                header += (
-                    f"uniq_{element}_{strand}"
-                    for element in CountWriter.COUNT_HEADER_ELEMENTS
-                )
+                header += (f"uniq_{element}_{strand}" for element in reports)
                 if self.has_ambig_counts:
-                    header += (
-                        f"combined_{element}_{strand}"
-                        for element in CountWriter.COUNT_HEADER_ELEMENTS
-                    )
+                    header += (f"combined_{element}_{strand}" for element in reports)
         return header
 
     def compile_output_row(self, counts, scaling_factor=1, ambig_scaling_factor=1):
+
+        def compile_block(raw, lnorm, scaling_factors):
+            return (raw, lnorm,) + tuple(lnorm * factor for factor in scaling_factors)
+
         p, row = 0, []
+        rpkm_factor = 1e9 / self.aln_count
         # unique counts
-        row += tuple(counts[p:p + 2])
-        row += (row[-1] * scaling_factor, row[-1] / self.aln_count * 1e9,)
+        # row += tuple(counts[p:p + 2])
+        # row += (row[-1] * scaling_factor, row[-1] / self.aln_count * 1e9,)
+        row += compile_block(*counts[p:p + 2], (scaling_factor, rpkm_factor,))
         p += 2
         # ambiguous counts
         if self.has_ambig_counts:
-            row += tuple(counts[p:p + 2])
-            row += (row[-1] * ambig_scaling_factor, row[-1] / self.aln_count * 1e9,)
+            # row += tuple(counts[p:p + 2])
+            # row += (row[-1] * ambig_scaling_factor, row[-1] / self.aln_count * 1e9,)
+            row += compile_block(*counts[p:p + 2], (ambig_scaling_factor, rpkm_factor,))
             p += 2
         # sense-strand unique
         if self.strand_specific:
-            row += tuple(counts[p:p + 2])
-            row += (row[-1] * scaling_factor, row[-1] / self.aln_count * 1e9,)
+            # row += tuple(counts[p:p + 2])
+            # row += (row[-1] * scaling_factor, row[-1] / self.aln_count * 1e9,)
+            row += compile_block(*counts[p:p + 2], (scaling_factor, rpkm_factor,))
             p += 2
             # sense-strand ambiguous
             if self.has_ambig_counts:
-                row += tuple(counts[p:p + 2])
-                row += (row[-1] * ambig_scaling_factor, row[-1] / self.aln_count * 1e9,)
+                # row += tuple(counts[p:p + 2])
+                # row += (row[-1] * ambig_scaling_factor, row[-1] / self.aln_count * 1e9,)
+                row += compile_block(*counts[p:p + 2], (ambig_scaling_factor, rpkm_factor,))
                 p += 2
             # antisense-strand unique
-            row += tuple(counts[p:p + 2])
-            row += (row[-1] * scaling_factor, row[-1] / self.aln_count * 1e9,)
+            # row += tuple(counts[p:p + 2])
+            # row += (row[-1] * scaling_factor, row[-1] / self.aln_count * 1e9,)
+            row += compile_block(*counts[p:p + 2], (scaling_factor, rpkm_factor,))
             p += 2
             if self.has_ambig_counts:
-                row += tuple(counts[p:p + 2])
-                row += (row[-1] * ambig_scaling_factor, row[-1] / self.aln_count * 1e9,)
-        return row  # + [scaling_factor, ambig_scaling_factor]
+                # row += tuple(counts[p:p + 2])
+                # row += (row[-1] * ambig_scaling_factor, row[-1] / self.aln_count * 1e9,)
+                row += compile_block(*counts[p:p + 2], (ambig_scaling_factor, rpkm_factor,))
+
+        out_row = []
+        n = len(CountWriter.COUNT_HEADER_ELEMENTS)
+        for col, item in enumerate(row):
+            if CountWriter.COUNT_HEADER_ELEMENTS[col % n] in self.publish_reports:
+                out_row.append(item)
+
+        return out_row
 
     def write_feature_counts(self, db, unannotated_reads, featcounts):
         for category_id, counts in sorted(featcounts.items()):
@@ -76,10 +91,11 @@ class CountWriter:
                 category_id
             ]
             category = db.query_category(category_id).name
-            logger.info(
-                "SCALING FACTORS %s %s %s",
-                category, scaling_factor, ambig_scaling_factor
-            )
+            if "scaled" in self.publish_reports:
+                logger.info(
+                    "SCALING FACTORS %s %s %s",
+                    category, scaling_factor, ambig_scaling_factor
+                )
             with gzip.open(f"{self.out_prefix}.{category}.txt.gz", "wt") as feat_out:
                 print("feature", *self.get_header(), sep="\t", file=feat_out)
                 print("unannotated", unannotated_reads, sep="\t", file=feat_out)
@@ -117,7 +133,8 @@ class CountWriter:
                     )
 
     def write_gene_counts(self, gene_counts, uniq_scaling_factor, ambig_scaling_factor):
-        logger.info("SCALING_FACTORS %s %s", uniq_scaling_factor, ambig_scaling_factor)
+        if "scaled" in self.publish_reports:
+            logger.info("SCALING_FACTORS %s %s", uniq_scaling_factor, ambig_scaling_factor)
         with gzip.open(f"{self.out_prefix}.gene_counts.txt.gz", "wt") as gene_out:
             print("gene", *self.get_header(), sep="\t", file=gene_out, flush=True)
 
