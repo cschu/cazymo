@@ -82,6 +82,8 @@ def main():
                 min_identity=args.min_identity, min_seqlen=args.min_seqlen,
                 external_readcounts=None if args.no_prefilter else (args.out_prefix + ".readcount.json"),
                 restrict_reports=("rpkm",),
+                report_category=False,
+                report_unannotated=False,
             )
 
     except Exception as err:

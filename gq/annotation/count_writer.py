@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class CountWriter:
     COUNT_HEADER_ELEMENTS = ["raw", "lnorm", "scaled", "rpkm"]
 
-    def __init__(self, prefix, aln_count, has_ambig_counts=False, strand_specific=False, restrict_reports=None):
+    def __init__(self, prefix, aln_count, has_ambig_counts=False, strand_specific=False, restrict_reports=None, report_category=True, report_unannotated=True):
         self.out_prefix = prefix
         self.aln_count = aln_count
         self.has_ambig_counts = has_ambig_counts
@@ -23,6 +23,10 @@ class CountWriter:
             item for item in CountWriter.COUNT_HEADER_ELEMENTS
             if restrict_reports is None or item in restrict_reports
         ]
+        if report_category:
+            self.publish_reports.append("category")
+        if report_unannotated:
+            self.publish_reports.append("unannotated")
 
     def get_header(self):
         reports = self.publish_reports
