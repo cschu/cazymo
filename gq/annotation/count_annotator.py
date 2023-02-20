@@ -191,7 +191,7 @@ class RegionCountAnnotator(CountAnnotator):
         CountAnnotator.__init__(self, strand_specific, report_scaling_factors=report_scaling_factors)
 
     # pylint: disable=R0914
-    def annotate(self, bam, db, count_manager, coverage_counter=None):
+    def annotate(self, refmgr, db, count_manager, coverage_counter=None):
         """
         Annotate a set of region counts via db-lookup.
         input:
@@ -202,7 +202,7 @@ class RegionCountAnnotator(CountAnnotator):
         for rid in set(count_manager.uniq_regioncounts).union(
             count_manager.ambig_regioncounts
         ):
-            ref = bam.get_reference(rid[0] if isinstance(rid, tuple) else rid)[0]
+            ref = refmgr.get(rid[0] if isinstance(rid, tuple) else rid)[0]
 
             for region in count_manager.get_regions(rid):
                 if self.strand_specific:
@@ -272,7 +272,7 @@ class GeneCountAnnotator(CountAnnotator):
     def __init__(self, strand_specific, report_scaling_factors=True):
         CountAnnotator.__init__(self, strand_specific, report_scaling_factors=report_scaling_factors)
 
-    def annotate(self, bam, db, count_manager):
+    def annotate(self, refmgr, db, count_manager):
         """
         Annotate a set of gene counts via db-iteration.
         input:
@@ -288,7 +288,7 @@ class GeneCountAnnotator(CountAnnotator):
         for rid in set(count_manager.uniq_seqcounts).union(
             count_manager.ambig_seqcounts
         ):
-            ref, region_length = bam.get_reference(rid[0] if isinstance(rid, tuple) else rid)
+            ref, region_length = refmgr.get(rid[0] if isinstance(rid, tuple) else rid)
 
             uniq_counts, ambig_counts = count_manager.get_counts(
                 rid, region_counts=False, strand_specific=self.strand_specific

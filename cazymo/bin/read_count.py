@@ -1,5 +1,7 @@
+# pylint: disable=C0103
 """ module docstring """
 
+import argparse
 import json
 import sys
 
@@ -20,6 +22,11 @@ def get_lines_from_chunks(_in, bufsize=400000000):
 
 def main():
 
+    ap = argparse.ArgumentParser()
+    ap.add_argument("out_prefix")
+    ap.add_argument("--all", action="store_true")
+    args = ap.parse_args()
+
     nreads, nalign, nlines = 0, 0, 0
     lastread = None
 
@@ -39,7 +46,8 @@ def main():
     }
     # print(json.dumps(counts), file=sys.stderr)
 
-    with open(f"{sys.argv[1]}.readcount.json", "wt", encoding="UTF-8") as json_out:
+    suffix = ".all" if args.all else ""
+    with open(f"{args.out_prefix}{suffix}.readcount.json", "wt", encoding="UTF-8") as json_out:
         print(json.dumps(counts), file=json_out)
 
 

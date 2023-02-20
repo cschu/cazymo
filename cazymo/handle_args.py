@@ -40,21 +40,49 @@ def handle_args(args):
         "bwa_index",
         type=str, help="",
     )
+
     ap.add_argument(
-        "input_files",
+        "-1",
+        dest="reads1",
         type=str,
-        nargs="*",
-        help=textwrap.dedent(
-            """\
-            Path to metagenomic reads in fastq format or alignments in sam or bam format.
-            Fastq files can be supplied as a single unpaired file or two paired-end files.
-            Sam or bam files need to be name-sorted and need to be specified via the --format flag.
-            Ambiguous alignments need to be flagged as secondary
-            alignments with the same read id as their primary alignment.
-            (e.g. output from BWA mem -a).
-            Input from STDIN can be used with '-'."""
-        ),
+        help="A comma-delimited string of forward/R1 read fastq files."
     )
+
+    ap.add_argument(
+        "-2",
+        dest="reads2",
+        type=str,
+        help="A comma-delimited string of reverse/R2 read fastq files."
+    )
+
+    ap.add_argument(
+        "--singles", "-s",
+        type=str,
+        help="A comma-delimited string of single-end read fastq files."
+    )
+
+    ap.add_argument(
+        "--orphans",
+        type=str,
+        help="A comma-delimited string of orphan read fastq files."
+    )
+
+    # ap.add_argument(
+    #     "input_files",
+    #     type=str,
+    #     nargs="*",
+    #     help=textwrap.dedent(
+    #         """\
+    #         Path to metagenomic reads in fastq format or alignments in sam or bam format.
+    #         Fastq files can be supplied as a single unpaired file or two paired-end files.
+    #         Sam or bam files need to be name-sorted and need to be specified via the --format flag.
+    #         Ambiguous alignments need to be flagged as secondary
+    #         alignments with the same read id as their primary alignment.
+    #         (e.g. output from BWA mem -a).
+    #         Input from STDIN can be used with '-'."""
+    #     ),
+    # )
+
     ap.add_argument(
         "--out_prefix",
         "-o",
