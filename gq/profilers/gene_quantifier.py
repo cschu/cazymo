@@ -32,13 +32,14 @@ class GeneQuantifier(FeatureQuantifier):
             paired_end_count=paired_end_count,
         )
 
-    def process_alignment_group(self, aln_group):
+    def process_alignment_group(self, aln_group, aln_reader):
         # logger.info("Processing new alignment group %s (%s)", aln_group.qname, aln_group.n_align())
         ambig_counts = aln_group.get_ambig_align_counts()
         if any(ambig_counts) and self.require_ambig_bookkeeping:
             for aln in aln_group.get_alignments():
                 if aln is not None:
-                    current_ref = self.alp.get_reference(aln.rid)[0]
+                    # current_ref = aln_reader.get_reference(aln.rid)[0]
+                    current_ref = self.register_reference(aln.rid, aln_reader)
                     ambig_count = ambig_counts[aln.is_second()]
                     hits = self.process_alignments_sameref(
                         current_ref, (aln.shorten(),), aln_count=ambig_count
@@ -47,7 +48,8 @@ class GeneQuantifier(FeatureQuantifier):
                         hits, ambiguous_counts=True, pair=aln_group.is_paired()
                     )
         elif aln_group.is_aligned_pair():
-            current_ref = self.alp.get_reference(aln_group.primaries[0].rid)[0]
+            # current_ref = aln_reader.get_reference(aln_group.primaries[0].rid)[0]
+            current_ref = self.register_reference(aln_group.primaries[0].rid)
             hits = self.process_alignments_sameref(
                 current_ref,
                 (
@@ -60,7 +62,8 @@ class GeneQuantifier(FeatureQuantifier):
             )
         else:
             for aln in aln_group.get_alignments():
-                current_ref = self.alp.get_reference(aln.rid)[0]
+                # current_ref = aln_reader.get_reference(aln.rid)[0]
+                current_ref = self.register_reference(aln.rid)
                 hits = self.process_alignments_sameref(
                     current_ref, (aln.shorten(),)
                 )

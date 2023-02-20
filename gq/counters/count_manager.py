@@ -85,15 +85,15 @@ class CountManager:
         elif region_counter is not None:
             region_counter.update_counts(count_stream, increment=increment)
 
-    def dump_raw_counters(self, prefix, bam):
+    def dump_raw_counters(self, prefix, refmgr):
         if self.uniq_seqcounts is not None:
-            self.uniq_seqcounts.dump(prefix, bam)
+            self.uniq_seqcounts.dump(prefix, refmgr)
         if self.ambig_seqcounts is not None:
-            self.ambig_seqcounts.dump(prefix, bam)
+            self.ambig_seqcounts.dump(prefix, refmgr)
         if self.uniq_regioncounts is not None:
-            self.uniq_regioncounts.dump(prefix, bam)
+            self.uniq_regioncounts.dump(prefix, refmgr)
         if self.ambig_regioncounts is not None:
-            self.ambig_regioncounts.dump(prefix, bam)
+            self.ambig_regioncounts.dump(prefix, refmgr)
 
     def get_unannotated_reads(self):
         unannotated_reads = 0

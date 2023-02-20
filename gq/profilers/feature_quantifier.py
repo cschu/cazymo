@@ -51,6 +51,7 @@ class FeatureQuantifier:
         self.ambig_mode = ambig_mode
         self.bamfile = None
         self.alp = None
+        self.reference_manager = {}
         self.strand_specific = strand_specific
         self.calc_coverage = calc_coverage
 
@@ -139,7 +140,7 @@ class FeatureQuantifier:
             self.adm = AnnotationDatabaseManager.from_db(self.db)
 
         if dump_counters:
-            self.count_manager.dump_raw_counters(self.out_prefix, self.alp)
+            self.count_manager.dump_raw_counters(self.out_prefix, self.reference_manager)
 
         cov_ctr = CoverageCounter() if self.calc_coverage else None
 
@@ -180,6 +181,17 @@ class FeatureQuantifier:
 
         self.adm.clear_caches()
 
+    def register_reference(self, rid, aln_reader):
+        known_ref = self.reference_manager.get(rid)
+        new_ref = aln_reader.get_reference(rid)
+
+        if known_ref is None or new_ref == known_ref:
+            self.reference_manager[rid] = new_ref
+        else:
+            raise ValueError(f"Reference clash {rid} points to old_ref={known_ref} and new_ref={new_ref}.")
+
+        return new_ref[0]
+
     # pylint: disable=W0613
     def process_alignment_group(self, aln_group):
         ...
@@ -209,7 +221,7 @@ class FeatureQuantifier:
 
             if current_aln_group is None or current_aln_group.qname != aln.qname:
                 if current_aln_group is not None:
-                    self.process_alignment_group(current_aln_group)
+                    self.process_alignment_group(current_aln_group, aln_reader)
                 current_aln_group = AlignmentGroup()
                 read_count += 1
 
@@ -219,7 +231,7 @@ class FeatureQuantifier:
             current_aln_group.add_alignment(aln)
 
         if current_aln_group is not None:
-            self.process_alignment_group(current_aln_group)
+            self.process_alignment_group(current_aln_group, aln_reader)
 
         if aln_count == 0:
             logger.warning("No alignments present in stream.")

@@ -37,13 +37,13 @@ class RegionQuantifier(FeatureQuantifier):
 
         self.adm = AnnotationDatabaseManager.from_db(self.db)
 
-    def process_alignment_group(self, aln_group):
+    def process_alignment_group(self, aln_group, aln_reader):
         # logger.info("Processing new alignment group %s (%s)", aln_group.qname, aln_group.n_align())
         ambig_counts = list(aln_group.get_ambig_align_counts())
         if any(ambig_counts) and self.require_ambig_bookkeeping:
             all_hits = []
             for aln in aln_group.get_alignments():
-                current_ref = self.alp.get_reference(aln.rid)[0]
+                current_ref = aln_reader.get_reference(aln.rid)[0]
                 # how many other positons does this read align to?
                 # this is needed in 1overN to scale down counts of multiple alignments
                 ambig_count = ambig_counts[aln.is_second()]
@@ -67,7 +67,7 @@ class RegionQuantifier(FeatureQuantifier):
                 pair=aln_group.is_paired()
             )
         elif aln_group.is_aligned_pair():
-            current_ref = self.alp.get_reference(aln_group.primaries[0].rid)[0]
+            current_ref = aln_reader.get_reference(aln_group.primaries[0].rid)[0]
             hits = self.process_alignments_sameref(
                 current_ref,
                 (
@@ -80,7 +80,7 @@ class RegionQuantifier(FeatureQuantifier):
             )
         else:
             for aln in aln_group.get_alignments():
-                current_ref = self.alp.get_reference(aln.rid)[0]
+                current_ref = aln_reader.get_reference(aln.rid)[0]
                 hits = self.process_alignments_sameref(
                     current_ref, (aln.shorten(),)
                 )
