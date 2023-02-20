@@ -22,7 +22,6 @@ class RegionQuantifier(FeatureQuantifier):
         strand_specific=False,
         calc_coverage=False,
         paired_end_count=1,
-        unmarked_orphans=False,
         reference_type="genome"
     ):
         FeatureQuantifier.__init__(
@@ -34,7 +33,6 @@ class RegionQuantifier(FeatureQuantifier):
             reference_type=reference_type,
             calc_coverage=calc_coverage,
             paired_end_count=paired_end_count,
-            unmarked_orphans=unmarked_orphans,
         )
 
         self.adm = AnnotationDatabaseManager.from_db(self.db)

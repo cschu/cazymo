@@ -24,6 +24,43 @@ def check_bwa_index(prefix):
     return all(os.path.isfile(prefix + suffix) for suffix in suffixes)
 
 
+# pylint: disable=R0913
+def run_alignment(
+    profiler, input_files, bwa_index, annotation_db, out_prefix, cpus_for_alignment=1, no_prefilter=False, min_identity=None, min_seqlen=None, unmarked_orphans=False
+):
+    samtools_io_flags = "-buSh" if no_prefilter else "-Sh"
+
+    commands = [
+        f"bwa mem -v 1 -a -t {cpus_for_alignment} -K 10000000 {bwa_index} {' '.join(input_files)}",
+        f"samtools view -F 4 {samtools_io_flags} -",
+    ]
+
+    if not no_prefilter:
+        logging.info("Prefiltering activated.")
+        commands += [
+            f"read_count {out_prefix}",
+            "samtools view -buSh -",
+            f"bedtools intersect -u -ubam -a stdin -b {annotation_db}",
+        ]
+
+    logger.info("Used command: %s", " | ".join(commands))
+
+    try:
+        with subprocess.Popen(" | ".join(commands), shell=True, stdout=subprocess.PIPE) as read_processing_proc:
+            profiler.count_alignments(
+                read_processing_proc.stdout,
+                aln_format="bam",
+                min_identity=min_identity,
+                min_seqlen=min_seqlen,
+                external_readcounts=None if no_prefilter else (out_prefix + ".readcount.json"),
+                unmarked_orphans=unmarked_orphans,
+            )
+    except Exception as err:
+        logger.error("Caught some exception:")
+        logger.error("%s", err)
+        raise Exception from err
+
+
 def main():
 
     args = handle_args(sys.argv[1:])
@@ -53,41 +90,56 @@ def main():
         out_prefix=args.out_prefix,
         ambig_mode="1overN",
         strand_specific=args.strand_specific,
-        unmarked_orphans=args.unmarked_orphans,
         reference_type="domain",
     )
 
-    samtools_io_flags = "-buSh" if args.no_prefilter else "-Sh"
+    run_alignment(
+        fq,
+        args.input_files,
+        args.bwa_index,
+        args.annotation_db,
+        args.out_prefix,
+        cpus_for_alignment=args.cpus_for_alignment,
+        no_prefilter=args.no_prefilter,
+        min_identity=args.min_identity,
+        min_seqlen=args.min_seqlen,
+        unmarked_orphans=args.unmarked_orphans
+    )
 
-    commands = [
-        f"bwa mem -v 1 -a -t {args.cpus_for_alignment} -K 10000000 {args.bwa_index} {' '.join(args.input_files)}",
-        f"samtools view -F 4 {samtools_io_flags} -",
-    ]
+    # samtools_io_flags = "-buSh" if args.no_prefilter else "-Sh"
 
-    if not args.no_prefilter:
-        logging.info("Prefiltering activated.")
-        commands += [
-            f"read_count {args.out_prefix}",
-            "samtools view -buSh -",
-            f"bedtools intersect -u -ubam -a stdin -b {args.annotation_db}",
-        ]
+    # commands = [
+    #     f"bwa mem -v 1 -a -t {args.cpus_for_alignment} -K 10000000 {args.bwa_index} {' '.join(args.input_files)}",
+    #     f"samtools view -F 4 {samtools_io_flags} -",
+    # ]
 
-    logger.info("Used command: %s", " | ".join(commands))
+    # if not args.no_prefilter:
+    #     logging.info("Prefiltering activated.")
+    #     commands += [
+    #         f"read_count {args.out_prefix}",
+    #         "samtools view -buSh -",
+    #         f"bedtools intersect -u -ubam -a stdin -b {args.annotation_db}",
+    #     ]
 
-    try:
-        with subprocess.Popen(" | ".join(commands), shell=True, stdout=subprocess.PIPE) as read_processing_proc:
-            fq.process_bamfile(
-                read_processing_proc.stdout,
-                aln_format="bam",
-                min_identity=args.min_identity, min_seqlen=args.min_seqlen,
-                external_readcounts=None if args.no_prefilter else (args.out_prefix + ".readcount.json"),
-                restrict_reports=("rpkm",),
-            )
+    # logger.info("Used command: %s", " | ".join(commands))
 
-    except Exception as err:
-        logger.error("Caught some exception:")
-        logger.error("%s", err)
-        raise Exception from err
+    # try:
+    #     with subprocess.Popen(" | ".join(commands), shell=True, stdout=subprocess.PIPE) as read_processing_proc:
+    #         fq.process_bamfile_old(
+    #             read_processing_proc.stdout,
+    #             aln_format="bam",
+    #             min_identity=args.min_identity, min_seqlen=args.min_seqlen,
+    #             external_readcounts=None if args.no_prefilter else (args.out_prefix + ".readcount.json"),
+    #             restrict_reports=("rpkm",),
+    #             unmarked_orphans=args.unmarked_orphans,
+    #         )
+
+    # except Exception as err:
+    #     logger.error("Caught some exception:")
+    #     logger.error("%s", err)
+    #     raise Exception from err
+
+    fq.finalise(restrict_reports=("rpkm",))
 
 
 if __name__ == "__main__":

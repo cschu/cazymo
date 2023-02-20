@@ -20,7 +20,6 @@ class GeneQuantifier(FeatureQuantifier):
         strand_specific=False,
         calc_coverage=False,
         paired_end_count=1,
-        unmarked_orphans=False,
     ):
         FeatureQuantifier.__init__(
             self,
@@ -31,7 +30,6 @@ class GeneQuantifier(FeatureQuantifier):
             reference_type="gene",
             calc_coverage=calc_coverage and False,  # TODO: figure out, but nobody wants it anyway
             paired_end_count=paired_end_count,
-            unmarked_orphans=unmarked_orphans,
         )
 
     def process_alignment_group(self, aln_group):
