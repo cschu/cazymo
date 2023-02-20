@@ -87,13 +87,17 @@ def check_input_reads(fwd=None, rev=None, singles=None, orphans=None):
     elif fwd_reads:
             logger.warning("Found -1 forward/R1 reads but no -2 reverse/R2 reads. Treating these as single-end reads.")
             all_readsets += zip((["single"] * len(fwd_reads)), fwd_reads)
-    else:
+    elif rev_reads:
         raise ValueError(f"Found -2 reverse/R2 reads but no -1 forward/R1 reads.")
+    
     
     if single_reads:
         all_readsets += zip((["single"] * len(single_reads)), single_reads)
     if orphan_reads:
         all_readsets += zip((["orphan"] * len(orphan_reads)), orphan_reads)
+
+    if not all_readsets:
+        raise ValueError(f"No input reads specified.")
 
     for _, *reads in all_readsets:
         for r in reads:
