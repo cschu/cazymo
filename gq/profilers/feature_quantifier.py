@@ -336,7 +336,7 @@ class FeatureQuantifier:
             logger.info(
                 "Alignment rate: %s%%, Filtered: %s%%",
                 round(self.aln_counter["read_count"] / self.aln_counter["full_read_count"], 3) * 100,
-                round(self.aln_counter["read_count"] / self.aln_counter["filtered_read_count"], 3) * 100,
+                round(self.aln_counter["filtered_read_count"] / self.aln_counter["full_read_count"], 3) * 100,
             )
             
         logger.info("Finished.")
