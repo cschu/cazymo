@@ -148,10 +148,10 @@ class FeatureQuantifier:
 
         if self.do_overlap_detection:
             count_annotator = RegionCountAnnotator(self.strand_specific, report_scaling_factors=report_scaling_factors)
-            count_annotator.annotate(self.alp, self.adm, self.count_manager, coverage_counter=cov_ctr)
+            count_annotator.annotate(self.reference_manager, self.adm, self.count_manager, coverage_counter=cov_ctr)
         else:
             count_annotator = GeneCountAnnotator(self.strand_specific, report_scaling_factors=report_scaling_factors)
-            count_annotator.annotate(self.alp, self.adm, self.count_manager)
+            count_annotator.annotate(self.reference_manager, self.adm, self.count_manager)
 
         count_writer = CountWriter(
             self.out_prefix,
