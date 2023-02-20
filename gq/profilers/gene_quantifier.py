@@ -49,7 +49,7 @@ class GeneQuantifier(FeatureQuantifier):
                     )
         elif aln_group.is_aligned_pair():
             # current_ref = aln_reader.get_reference(aln_group.primaries[0].rid)[0]
-            current_ref = self.register_reference(aln_group.primaries[0].rid)
+            current_ref = self.register_reference(aln_group.primaries[0].rid, aln_reader)
             hits = self.process_alignments_sameref(
                 current_ref,
                 (
@@ -63,7 +63,7 @@ class GeneQuantifier(FeatureQuantifier):
         else:
             for aln in aln_group.get_alignments():
                 # current_ref = aln_reader.get_reference(aln.rid)[0]
-                current_ref = self.register_reference(aln.rid)
+                current_ref = self.register_reference(aln.rid, aln_reader)
                 hits = self.process_alignments_sameref(
                     current_ref, (aln.shorten(),)
                 )
