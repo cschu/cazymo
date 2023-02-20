@@ -282,9 +282,11 @@ class FeatureQuantifier:
         )
         filtered_readcount = read_count
 
+        full_readcount = FeatureQuantifier.get_readcount(0, f"{self.out_prefix}.all.readcount.json", verbose=False)
+
         if external_readcounts is not None:
             read_count = FeatureQuantifier.get_readcount(read_count, external_readcounts)
-            full_readcount = FeatureQuantifier.get_readcount(0, external_readcounts.replace(".readcount.json", ".all.readcount.json"), verbose=False)
+            
 
         self.aln_counter.update(
             {
