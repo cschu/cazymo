@@ -242,7 +242,7 @@ class FeatureQuantifier:
         return aln_count, read_count, 0, None
 
     @staticmethod
-    def get_readcount(internal_readcounts, external_readcounts):
+    def get_readcount(internal_readcounts, external_readcounts, verbose=True):
         # pylint: disable=W0703
         # need to figure out what exceptions to catch...
         read_count = internal_readcounts
@@ -250,7 +250,8 @@ class FeatureQuantifier:
             try:
                 with open(external_readcounts, encoding="UTF-8") as read_counts_in:
                     read_count = json.load(read_counts_in)["n_reads"]
-                logger.info("Using pre-filter readcounts (%s).", read_count)
+                if verbose:
+                    logger.info("Found pre-filter readcounts (%s).", read_count)
             except Exception as err:
                 print(f"Error accessing readcounts: {err}")
                 logger.warning(
@@ -279,15 +280,19 @@ class FeatureQuantifier:
             min_seqlen=min_seqlen,
             unmarked_orphans=unmarked_orphans,
         )
+        filtered_readcount = read_count
 
         if external_readcounts is not None:
             read_count = FeatureQuantifier.get_readcount(read_count, external_readcounts)
+            full_readcount = FeatureQuantifier.get_readcount(0, external_readcounts.replace(".readcount.json", ".all.readcount.json"), verbose=False)
 
         self.aln_counter.update(
             {
                 "aln_count": aln_count,
                 "read_count": read_count,
                 "unannotated_ambig": unannotated_ambig,
+                "full_read_count": full_readcount,
+                "filtered_read_count": filtered_readcount,
             }
         )
 
@@ -325,6 +330,15 @@ class FeatureQuantifier:
                 dump_counters=dump_counters,
             )
 
+            for metric, value in self.aln_counter.items():
+                logger.info("%s: %s", metric, value)
+
+            logger.info(
+                "Alignment rate: %s%%, Filtered: %s%%",
+                round(self.aln_counter["read_count"] / self.aln_counter["full_read_count"], 3) * 100,
+                round(self.aln_counter["read_count"] / self.aln_counter["filtered_read_count"], 3) * 100,
+            )
+            
         logger.info("Finished.")
 
     def process_bamfile_old(

@@ -41,6 +41,7 @@ def run_alignment(
 
     commands = [
         f"bwa mem -v 1 -a -t {cpus_for_alignment} -K 10000000 {bwa_index} {' '.join(input_files)}",
+        f"read_count {out_prefix} --all"
         f"samtools view -F 4 {samtools_io_flags} -",
     ]
 
@@ -140,6 +141,9 @@ def main():
     )
 
     for input_type, *reads in input_data:
+
+        logger.info("Running %s alignment: %s", input_type, ",".join(reads))
+
         run_alignment(
             fq,
             # args.input_files,
