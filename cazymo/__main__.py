@@ -85,19 +85,18 @@ def check_input_reads(fwd=None, rev=None, singles=None, orphans=None):
         else:
             raise ValueError(f"Found different numbers of forward/R1 {len(fwd_reads)} and reverse/R2 {len(rev_reads)} reads.")
     elif fwd_reads:
-            logger.warning("Found -1 forward/R1 reads but no -2 reverse/R2 reads. Treating these as single-end reads.")
-            all_readsets += zip((["single"] * len(fwd_reads)), fwd_reads)
+        logger.warning("Found -1 forward/R1 reads but no -2 reverse/R2 reads. Treating these as single-end reads.")
+        all_readsets += zip((["single"] * len(fwd_reads)), fwd_reads)
     elif rev_reads:
-        raise ValueError(f"Found -2 reverse/R2 reads but no -1 forward/R1 reads.")
-    
-    
+        raise ValueError("Found -2 reverse/R2 reads but no -1 forward/R1 reads.")
+
     if single_reads:
         all_readsets += zip((["single"] * len(single_reads)), single_reads)
     if orphan_reads:
         all_readsets += zip((["orphan"] * len(orphan_reads)), orphan_reads)
 
     if not all_readsets:
-        raise ValueError(f"No input reads specified.")
+        raise ValueError("No input reads specified.")
 
     for _, *reads in all_readsets:
         for r in reads:
@@ -118,9 +117,6 @@ def main():
 
     input_data = check_input_reads(args.reads1, args.reads2, args.singles, args.orphans)
 
-    # if args.input_files != "-" and not all(os.path.exists(f) for f in args.input_files):
-    #     input_files_str = "\n".join(args.input_files)
-    #     raise ValueError(f"There is an issue with your input files. Please check.\n{input_files_str}")
     if not os.path.exists(args.annotation_db):
         raise ValueError(f"{args.annotation_db} is not a valid annotation database")
     if not check_bwa_index(args.bwa_index):
@@ -130,8 +126,6 @@ def main():
         pathlib.Path(os.path.dirname(args.out_prefix)).mkdir(
             exist_ok=True, parents=True
         )
-
-    
 
     db_importer = DomainBedDatabaseImporter(logger, args.annotation_db, single_category="cazy")
     logger.info("Finished loading database.")
@@ -159,7 +153,7 @@ def main():
             no_prefilter=args.no_prefilter,
             min_identity=args.min_identity,
             min_seqlen=args.min_seqlen,
-            unmarked_orphans=input_type=="orphan",
+            unmarked_orphans=input_type == "orphan",
         )
 
     fq.finalise(restrict_reports=("rpkm",))

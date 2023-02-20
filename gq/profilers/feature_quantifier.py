@@ -8,6 +8,7 @@ import logging
 import os
 import time
 
+from abc import ABC, abstractmethod
 from collections import Counter
 
 from gq.db.annotation_db import AnnotationDatabaseManager
@@ -21,7 +22,7 @@ from .. import __toolname__
 logger = logging.getLogger(__name__)
 
 
-class FeatureQuantifier:
+class FeatureQuantifier(ABC):
     # pylint: disable=R0902,R0913
     TRUE_AMBIG_MODES = ("dist1", "1overN")
 
@@ -192,8 +193,8 @@ class FeatureQuantifier:
 
         return new_ref[0]
 
-    # pylint: disable=W0613
-    def process_alignment_group(self, aln_group):
+    @abstractmethod
+    def process_alignment_group(self, aln_group, aln_reader):
         ...
 
     def process_alignments(self, aln_reader, min_identity=None, min_seqlen=None, unmarked_orphans=False):
@@ -286,7 +287,6 @@ class FeatureQuantifier:
 
         if external_readcounts is not None:
             read_count = FeatureQuantifier.get_readcount(read_count, external_readcounts)
-            
 
         self.aln_counter.update(
             {
@@ -340,7 +340,7 @@ class FeatureQuantifier:
                 round(self.aln_counter["read_count"] / self.aln_counter["full_read_count"], 3) * 100,
                 round(self.aln_counter["filtered_read_count"] / self.aln_counter["full_read_count"], 3) * 100,
             )
-            
+
         logger.info("Finished.")
 
     def process_bamfile_old(

@@ -43,7 +43,6 @@ class RegionQuantifier(FeatureQuantifier):
         if any(ambig_counts) and self.require_ambig_bookkeeping:
             all_hits = []
             for aln in aln_group.get_alignments():
-                # current_ref = aln_reader.get_reference(aln.rid)[0]
                 current_ref = self.register_reference(aln.rid, aln_reader)
                 # how many other positons does this read align to?
                 # this is needed in 1overN to scale down counts of multiple alignments
@@ -68,7 +67,6 @@ class RegionQuantifier(FeatureQuantifier):
                 pair=aln_group.is_paired()
             )
         elif aln_group.is_aligned_pair():
-            # current_ref = aln_reader.get_reference(aln_group.primaries[0].rid)[0]
             current_ref = self.register_reference(aln_group.primaries[0].rid, aln_reader)
             hits = self.process_alignments_sameref(
                 current_ref,

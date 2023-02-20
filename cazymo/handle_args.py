@@ -40,7 +40,7 @@ def handle_args(args):
         "bwa_index",
         type=str, help="",
     )
-    
+
     ap.add_argument(
         "-1",
         dest="reads1",
@@ -67,7 +67,6 @@ def handle_args(args):
         help="A comma-delimited string of orphan read fastq files."
     )
 
-
     # ap.add_argument(
     #     "input_files",
     #     type=str,
@@ -83,7 +82,7 @@ def handle_args(args):
     #         Input from STDIN can be used with '-'."""
     #     ),
     # )
-    
+
     ap.add_argument(
         "--out_prefix",
         "-o",
