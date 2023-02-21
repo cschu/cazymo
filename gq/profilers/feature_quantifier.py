@@ -283,7 +283,10 @@ class FeatureQuantifier(ABC):
         )
         filtered_readcount = read_count
 
-        full_readcount = FeatureQuantifier.get_readcount(0, f"{self.out_prefix}.all.readcount.json", verbose=False)
+        try:
+            full_readcount = FeatureQuantifier.get_readcount(0, f"{self.out_prefix}.all.readcount.json", verbose=False)
+        except FileNotFoundError:
+            full_readcount = filtered_readcount
 
         if external_readcounts is not None:
             read_count = FeatureQuantifier.get_readcount(read_count, external_readcounts)
