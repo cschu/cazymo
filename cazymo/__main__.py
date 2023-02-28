@@ -41,17 +41,17 @@ def run_alignment(
 
     commands = [
         f"bwa mem -v 1 -a -t {cpus_for_alignment} -K 10000000 {bwa_index} {' '.join(input_files)}",
-        f"read_count {out_prefix} --all",
-        f"samtools view -F 4 {samtools_io_flags} -",
+        # f"read_count {out_prefix} --all",
+        # f"samtools view -F 4 {samtools_io_flags} -",
     ]
 
-    if not no_prefilter:
-        logging.info("Prefiltering activated.")
-        commands += [
-            f"read_count {out_prefix}",
-            "samtools view -buSh -",
-            f"bedtools intersect -u -ubam -a stdin -b {annotation_db}",
-        ]
+    # if not no_prefilter:
+    #     logging.info("Prefiltering activated.")
+    #     commands += [
+    #         f"read_count {out_prefix}",
+    #         "samtools view -buSh -",
+    #         f"bedtools intersect -u -ubam -a stdin -b {annotation_db}",
+    #     ]
 
     logger.info("Used command: %s", " | ".join(commands))
 
@@ -62,7 +62,7 @@ def run_alignment(
                 aln_format="bam",
                 min_identity=min_identity,
                 min_seqlen=min_seqlen,
-                external_readcounts=None if no_prefilter else (out_prefix + ".readcount.json"),
+                # external_readcounts=None,  # if no_prefilter else (out_prefix + ".readcount.json"),
                 unmarked_orphans=unmarked_orphans,
             )
     except Exception as err:
@@ -150,7 +150,7 @@ def main():
             args.annotation_db,
             args.out_prefix,
             cpus_for_alignment=args.cpus_for_alignment,
-            no_prefilter=args.no_prefilter,
+            no_prefilter=True,  # args.no_prefilter,
             min_identity=args.min_identity,
             min_seqlen=args.min_seqlen,
             unmarked_orphans=input_type == "orphan",

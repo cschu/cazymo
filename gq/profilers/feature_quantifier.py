@@ -275,21 +275,23 @@ class FeatureQuantifier(ABC):
     ):
         aln_reader = AlignmentProcessor(aln_stream, aln_format)
 
-        aln_count, read_count, unannotated_ambig, _ = self.process_alignments(
+        aln_count, _, unannotated_ambig, _ = self.process_alignments(
             aln_reader,
             min_identity=min_identity,
             min_seqlen=min_seqlen,
             unmarked_orphans=unmarked_orphans,
         )
-        filtered_readcount = read_count
+        # filtered_readcount = read_count
 
-        try:
-            full_readcount = FeatureQuantifier.get_readcount(0, f"{self.out_prefix}.all.readcount.json", verbose=False)
-        except FileNotFoundError:
-            full_readcount = filtered_readcount
+        # try:
+        #     full_readcount = FeatureQuantifier.get_readcount(0, f"{self.out_prefix}.all.readcount.json", verbose=False)
+        # except FileNotFoundError:
+        #     full_readcount = filtered_readcount
+        
 
-        if external_readcounts is not None:
-            read_count = FeatureQuantifier.get_readcount(read_count, external_readcounts)
+        # if external_readcounts is not None:
+        #     read_count = FeatureQuantifier.get_readcount(read_count, external_readcounts)
+        full_readcount, read_count, filtered_readcount = aln_reader.read_counter
 
         self.aln_counter.update(
             {
