@@ -281,16 +281,7 @@ class FeatureQuantifier(ABC):
             min_seqlen=min_seqlen,
             unmarked_orphans=unmarked_orphans,
         )
-        # filtered_readcount = read_count
-
-        # try:
-        #     full_readcount = FeatureQuantifier.get_readcount(0, f"{self.out_prefix}.all.readcount.json", verbose=False)
-        # except FileNotFoundError:
-        #     full_readcount = filtered_readcount
         
-
-        # if external_readcounts is not None:
-        #     read_count = FeatureQuantifier.get_readcount(read_count, external_readcounts)
         full_readcount, read_count, filtered_readcount = aln_reader.read_counter
 
         self.aln_counter.update(
@@ -326,7 +317,6 @@ class FeatureQuantifier(ABC):
                 file=aln_stats_out
             )
 
-        # try to access externally specified readcounts
         if self.aln_counter.get("aln_count"):
             self.process_counters(
                 self.aln_counter["unannotated_ambig"],

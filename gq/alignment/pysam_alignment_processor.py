@@ -96,9 +96,6 @@ class AlignmentProcessor:
                     dict(pysam_aln.tags)
                 )
 
-                # if SamFlags.is_unmapped(aln.flag):
-                #     continue                
-
                 if aln.flag & filter_flags:
                     continue
 
