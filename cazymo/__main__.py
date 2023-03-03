@@ -29,40 +29,26 @@ def run_alignment(
     profiler,
     input_files,
     bwa_index,
-    annotation_db,
-    out_prefix,
     cpus_for_alignment=1,
-    no_prefilter=False,
     min_identity=None,
     min_seqlen=None,
     unmarked_orphans=False,
 ):
-    samtools_io_flags = "-buSh" if no_prefilter else "-Sh"
-
     commands = [
         f"bwa mem -v 1 -a -t {cpus_for_alignment} -K 10000000 {bwa_index} {' '.join(input_files)}",
-        f"read_count {out_prefix} --all",
-        f"samtools view -F 4 {samtools_io_flags} -",
     ]
 
-    if not no_prefilter:
-        logging.info("Prefiltering activated.")
-        commands += [
-            f"read_count {out_prefix}",
-            "samtools view -buSh -",
-            f"bedtools intersect -u -ubam -a stdin -b {annotation_db}",
-        ]
+    commands = " | ".join(commands)
 
-    logger.info("Used command: %s", " | ".join(commands))
+    logger.info("Used command: %s", commands)
 
     try:
-        with subprocess.Popen(" | ".join(commands), shell=True, stdout=subprocess.PIPE) as read_processing_proc:
+        with subprocess.Popen(commands, shell=True, stdout=subprocess.PIPE) as read_processing_proc:
             profiler.count_alignments(
                 read_processing_proc.stdout,
-                aln_format="bam",
+                aln_format="sam",
                 min_identity=min_identity,
                 min_seqlen=min_seqlen,
-                external_readcounts=None if no_prefilter else (out_prefix + ".readcount.json"),
                 unmarked_orphans=unmarked_orphans,
             )
     except Exception as err:
@@ -130,11 +116,10 @@ def main():
     db_importer = DomainBedDatabaseImporter(logger, args.annotation_db, single_category="cazy")
     logger.info("Finished loading database.")
 
-    fq = RegionQuantifier(
+    profiler = RegionQuantifier(
         db=db_importer,
         out_prefix=args.out_prefix,
         ambig_mode="1overN",
-        strand_specific=args.strand_specific,
         reference_type="domain",
     )
 
@@ -143,20 +128,16 @@ def main():
         logger.info("Running %s alignment: %s", input_type, ",".join(reads))
 
         run_alignment(
-            fq,
-            # args.input_files,
+            profiler,
             reads,
             args.bwa_index,
-            args.annotation_db,
-            args.out_prefix,
             cpus_for_alignment=args.cpus_for_alignment,
-            no_prefilter=args.no_prefilter,
             min_identity=args.min_identity,
             min_seqlen=args.min_seqlen,
             unmarked_orphans=input_type == "orphan",
         )
 
-    fq.finalise(restrict_reports=("rpkm",))
+    profiler.finalise(restrict_reports=("rpkm",))
 
 
 if __name__ == "__main__":
