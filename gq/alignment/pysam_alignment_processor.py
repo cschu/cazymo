@@ -66,7 +66,7 @@ class AlignmentProcessor:
         verbose=True,
     ):
         last_read, last_passed_read = None, None
-        
+
         with self.aln_stream:
             for pysam_aln in self.aln_stream:
 
@@ -75,7 +75,7 @@ class AlignmentProcessor:
                 if last_read is None or pysam_aln.qname != last_read:
                     last_read = pysam_aln.qname
                     self.read_counter[AlignmentProcessor.TOTAL_READS] += 1
-                    
+
                     if not read_unmapped:
                         self.read_counter[AlignmentProcessor.TOTAL_ALIGNED_READS] += 1
 

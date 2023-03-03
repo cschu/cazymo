@@ -74,7 +74,7 @@ def handle_args(args):
         default="cazymo",
         help="Prefix for output files.",
     )
-    
+
     ap.add_argument(
         "--min_identity",
         type=float,

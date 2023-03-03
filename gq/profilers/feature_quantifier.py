@@ -264,6 +264,7 @@ class FeatureQuantifier(ABC):
 
         return read_count
 
+    # pylint: disable=W0613
     def count_alignments(
         self,
         aln_stream,
@@ -281,7 +282,7 @@ class FeatureQuantifier(ABC):
             min_seqlen=min_seqlen,
             unmarked_orphans=unmarked_orphans,
         )
-        
+
         full_readcount, read_count, filtered_readcount = aln_reader.read_counter
 
         self.aln_counter.update(
