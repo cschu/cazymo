@@ -120,7 +120,6 @@ def main():
         db=db_importer,
         out_prefix=args.out_prefix,
         ambig_mode="1overN",
-        strand_specific=args.strand_specific,
         reference_type="domain",
     )
 
