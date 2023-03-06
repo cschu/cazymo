@@ -137,7 +137,7 @@ def main():
             unmarked_orphans=input_type == "orphan",
         )
 
-    profiler.finalise(restrict_reports=("rpkm",))
+    profiler.finalise(restrict_reports=("raw", "rpkm",))
 
 
 if __name__ == "__main__":
